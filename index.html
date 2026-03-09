@@ -41,8 +41,10 @@
         .text-subheading { font-size: 18px; line-height: 1.4; font-weight: 500; }
         .text-caption { font-size: 14px; line-height: 1.5; color: var(--text-secondary); }
 
-        /* Header */
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 16px max(24px, calc((100vw - 1200px) / 2)); background-color: var(--bg-header); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 50; }
+        /* Header 排版優化 (確保切齊下方主視窗) */
+        .header { background-color: var(--bg-header); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 50; width: 100%; }
+        .header-inner { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 16px var(--space-lg); width: 100%; }
+        
         .header-left { display: flex; align-items: center; gap: 12px; }
         .logo-box { background: linear-gradient(135deg, #6B8DD6, #8E37D7); border-radius: 12px; width: 42px; height: 42px; display: flex; justify-content: center; align-items: center; color: white; font-size: 24px; font-weight: bold; font-family: 'Inter'; }
         .logo-text { display: flex; flex-direction: column; }
@@ -58,9 +60,9 @@
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
         /* 大盤濾網標籤 */
-        .regime-badge { font-size: 12px; padding: 2px 8px; border-radius: 12px; font-family: 'Noto Sans TC'; font-weight: 700; margin-left: 8px; display: none; }
-        .regime-bull { background: rgba(239, 68, 68, 0.15); color: var(--trade-up-buy); display: inline-block; }
-        .regime-bear { background: rgba(16, 185, 129, 0.15); color: var(--trade-down-sell); display: inline-block; border: 1px solid var(--trade-down-sell); }
+        .regime-badge { font-size: 12px; padding: 2px 8px; border-radius: 12px; font-family: 'Noto Sans TC'; font-weight: 700; display: inline-block; }
+        .regime-bull { background: rgba(239, 68, 68, 0.15); color: var(--trade-up-buy); }
+        .regime-bear { background: rgba(16, 185, 129, 0.15); color: var(--trade-down-sell); border: 1px solid var(--trade-down-sell); }
 
         .header-right { display: flex; align-items: center; gap: var(--space-md); }
         .btn-pill { display: inline-flex; align-items: center; gap: var(--space-sm); padding: 6px 16px; border-radius: var(--radius-pill); border: 1px solid var(--border-btn); background: var(--bg-card); color: var(--text-main); font-size: 14px; font-weight: 700; cursor: pointer; transition: var(--transition); }
@@ -71,6 +73,10 @@
         .card { background-color: var(--bg-card); border-radius: var(--radius-card); border: 1px solid var(--border-color); box-shadow: var(--shadow-card); margin-bottom: var(--space-lg); overflow: hidden; }
         .card-body { padding: var(--space-lg); }
 
+        /* 頂部雙欄對稱排版 */
+        .top-panels { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg); margin-bottom: var(--space-lg); }
+        @media (max-width: 768px) { .top-panels { grid-template-columns: 1fr; } }
+
         .btn { padding: 10px var(--space-md); border: none; border-radius: var(--radius-btn); font-weight: 500; font-size: 15px; cursor: pointer; transition: var(--transition); display: inline-flex; align-items: center; justify-content: center; gap: var(--space-sm); }
         .btn-primary { background: var(--primary-color); color: #FFFFFF; }
         .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
@@ -80,6 +86,7 @@
         
         .input-control { background: rgba(128,128,128,0.05); border: 1px solid var(--border-color); color: var(--text-main); padding: 10px var(--space-md); border-radius: var(--radius-btn); font-family: inherit; font-size: 14px; outline: none; transition: var(--transition); flex: 1; }
         .input-control:focus { border-color: var(--primary-color); }
+        select.input-control option { background-color: var(--bg-card); color: var(--text-main); } /* 修正深色模式下拉選單顏色 */
 
         .custom-stock-tag { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; background: rgba(74, 144, 226, 0.1); color: var(--primary-color); border: 1px solid var(--primary-color); border-radius: var(--radius-pill); font-size: 14px; font-weight: 500; }
         .custom-stock-tag button { background: none; border: none; color: inherit; cursor: pointer; font-size: 12px; }
@@ -154,32 +161,33 @@
 </head>
 <body>
     <header class="header">
-        <div class="header-left">
-            <div class="logo-box">H</div>
-            <div class="logo-text">
-                <div class="logo-title">股票分析系統 <span class="version-badge">v0.2.2</span></div>
-                <div class="logo-subtitle">你的投資策略 AI 幫手</div>
+        <div class="header-inner">
+            <div class="header-left">
+                <div class="logo-box">H</div>
+                <div class="logo-text">
+                    <div class="logo-title">股票分析系統 <span class="version-badge">v0.2.3</span></div>
+                    <div class="logo-subtitle">你的投資策略 AI 幫手</div>
+                </div>
             </div>
-        </div>
-        <div class="header-center">
-            <div class="market-status-box" id="marketStatusBox">
-                <span>加權指數</span>
-                <span class="text-up" id="marketIndexVal">讀取中...</span>
-                <span style="border-left: 1px solid var(--border-color); padding-left: 12px;" id="marketOpenStatus">
-                    <span class="status-dot closed"></span> <span style="font-family:'Noto Sans TC';">連線中</span>
-                </span>
+            <div class="header-center">
+                <div class="market-status-box" id="marketStatusBox">
+                    <span>加權指數</span>
+                    <span class="text-up" id="marketIndexVal">讀取中...</span>
+                    <span style="border-left: 1px solid var(--border-color); padding-left: 12px;">
+                        <span class="status-dot closed"></span> <span style="font-family:'Noto Sans TC';">連線中</span>
+                    </span>
+                </div>
             </div>
-            <div id="marketRegimeBadge" class="regime-badge"></div>
-        </div>
-        <div class="header-right">
-            <button id="btnHelp" class="btn-pill" title="新手教學與說明" onclick="openModal('helpModal')">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
-                <span class="effect-text">說明</span>
-            </button>
-            <button id="themeToggle" class="btn-pill" title="切換顯示模式">
-                <span id="themeIcon" style="color: #FCD34D; font-size: 16px;">☀️</span> 
-                <span id="themeText" class="effect-text">亮色</span>
-            </button>
+            <div class="header-right">
+                <button id="btnHelp" class="btn-pill" title="新手教學與說明" onclick="openModal('helpModal')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                    <span class="effect-text">說明</span>
+                </button>
+                <button id="themeToggle" class="btn-pill" title="切換顯示模式">
+                    <span id="themeIcon" style="color: #FCD34D; font-size: 16px;">☀️</span> 
+                    <span id="themeText" class="effect-text">亮色</span>
+                </button>
+            </div>
         </div>
     </header>
 
@@ -191,20 +199,20 @@
             </div>
 
             <div class="card-body">
-                <!-- 佈局優化：自選股票與書籤並排 -->
-                <div style="display: flex; flex-wrap: wrap; gap: var(--space-lg); margin-bottom: var(--space-lg);">
-                    <!-- 自選股票 -->
-                    <div class="advanced-group" style="flex: 1; min-width: 300px; margin-bottom: 0;">
+                <!-- 頂部雙欄對稱排版 (自選股與書籤) -->
+                <div class="top-panels">
+                    <!-- 左欄：自選股票 -->
+                    <div class="advanced-group" style="margin-bottom: 0;">
                         <div class="section-title" style="margin-bottom: var(--space-sm);">自選股票</div>
-                        <div class="flex-row" style="max-width: 420px;">
-                            <input type="text" id="customStockInput" class="input-control" placeholder="輸入代號，例如 2330 或 0050">
+                        <div class="flex-row">
+                            <input type="text" id="customStockInput" class="input-control" placeholder="[輸入代號，例如 2330 或 0050]">
                             <button type="button" id="btnAddCustomStock" class="btn btn-primary" style="padding: 10px 24px;">加入</button>
                         </div>
                         <div id="customStockTags" class="flex-row" style="margin-top: 12px; flex-wrap: wrap;"></div>
                     </div>
 
-                    <!-- 個人書籤 -->
-                    <div class="advanced-group" style="flex: 1; min-width: 350px; background: rgba(0,0,0,0.02); padding: var(--space-md); border-radius: var(--radius-card); border: 1px solid var(--border-color); margin-bottom: 0;">
+                    <!-- 右欄：個人書籤 -->
+                    <div class="advanced-group" style="background: rgba(0,0,0,0.02); padding: var(--space-md); border-radius: var(--radius-card); border: 1px solid var(--border-color); margin-bottom: 0;">
                         <div class="flex-row" style="justify-content: space-between; margin-bottom: var(--space-sm);">
                             <h3 class="section-title" style="margin:0;"><span style="color:var(--primary-color)">🔖</span> 個人書籤</h3>
                             <div style="font-size: 13px;">
@@ -214,7 +222,7 @@
                             </div>
                         </div>
                         <div class="flex-row" style="margin-bottom: 12px;">
-                            <input type="text" id="bookmarkNameInput" class="input-control" placeholder="名稱 (預設用人物名)...">
+                            <input type="text" id="bookmarkNameInput" class="input-control" placeholder="請輸入名稱">
                             <button type="button" class="btn btn-secondary" id="btnSaveBookmark" style="white-space: nowrap;">💾 儲存條件</button>
                         </div>
                         <div class="flex-row">
@@ -510,7 +518,7 @@
     </div>
 
     <footer class="footer">
-        <div>v0.2.2 | &copy;2026 <a href="https://huobest.com/" target="_blank">霍家私塾</a></div>
+        <div>v0.2.3 | &copy;2026 <a href="https://huobest.com/" target="_blank">霍家私塾</a></div>
         <div style="margin-top: 8px;">⚠️ 本平台僅供模擬交易學習用途，不構成任何投資建議。投資有風險，請自行評估。</div>
     </footer>
 
@@ -530,7 +538,7 @@
             marketTabs: document.querySelectorAll('.screener-tab'),
             customStockInput: document.getElementById('customStockInput'), btnAddCustomStock: document.getElementById('btnAddCustomStock'), customStockTags: document.getElementById('customStockTags'),
             btnScan: document.getElementById('btnScreenScan'), resultCard: document.getElementById('screenResultCard'), resultBody: document.getElementById('screenResultBody'), summaryBox: document.getElementById('summaryBox'),
-            scanConnStatus: document.getElementById('scanConnStatus'), marketIndexVal: document.getElementById('marketIndexVal'), marketStatusBox: document.getElementById('marketStatusBox')
+            scanConnStatus: document.getElementById('scanConnStatus'), marketStatusBox: document.getElementById('marketStatusBox')
         };
 
         const twStockNames = {
@@ -554,6 +562,36 @@
             'GS','MS','BLK','SPGI','C','T','TMUS','NEE','DUK','SO','UNP',
             'BMY','AMGN','MDT','GILD','ISRG','SYK','ZTS','ELV','LLY','CVS','CI'
         ];
+
+        // ================= 5. 主流程與渲染 =================
+        function updateThemeUI() {
+            if (AppState.theme === 'dark') { document.documentElement.classList.add('dark'); DOM.themeIcon.textContent = '☀️'; DOM.themeText.textContent = '亮色'; } 
+            else { document.documentElement.classList.remove('dark'); DOM.themeIcon.textContent = '🌙'; DOM.themeText.textContent = '暗色'; }
+        }
+        DOM.themeToggle.addEventListener('click', () => { AppState.theme = AppState.theme === 'dark' ? 'light' : 'dark'; localStorage.setItem('theme', AppState.theme); updateThemeUI(); });
+
+        // 自選股票邏輯
+        function addCustomStock() {
+            const val = DOM.customStockInput.value.trim().toUpperCase();
+            if(val && !AppState.customStocks.includes(val)) {
+                AppState.customStocks.push(val);
+                renderCustomStockTags();
+            }
+            DOM.customStockInput.value = '';
+        }
+        DOM.btnAddCustomStock.addEventListener('click', addCustomStock);
+        DOM.customStockInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') addCustomStock(); });
+        
+        window.removeCustomStock = function(stock) {
+            AppState.customStocks = AppState.customStocks.filter(s => s !== stock);
+            renderCustomStockTags();
+        }
+        
+        function renderCustomStockTags() {
+            DOM.customStockTags.innerHTML = AppState.customStocks.map(stock => 
+                `<span class="custom-stock-tag">${stock} <button onclick="removeCustomStock('${stock}')">✕</button></span>`
+            ).join('');
+        }
 
         // ================= 書籤系統 =================
         function initBookmarks() {
@@ -596,6 +634,7 @@
             try {
                 const name = document.getElementById('bookmarkSelect').value;
                 if(!name) return;
+                if(!confirm(`確定要刪除書籤「${name}」嗎？`)) return; 
                 const saved = JSON.parse(localStorage.getItem('traderBookmarks') || '{}');
                 delete saved[name]; localStorage.setItem('traderBookmarks', JSON.stringify(saved));
                 initBookmarks();
@@ -782,7 +821,7 @@
             return { isOpen: isOpen, text: isOpen ? '交易中' : '市場已收盤', dotClass: isOpen ? 'active' : 'closed' };
         }
 
-        // 雙重備援抓取大盤
+        // 大盤指數雙重備援 (修復無法連線問題)
         async function fetchIndexData(symbol, isTW) {
             try {
                 const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=3mo&interval=1d`;
@@ -812,12 +851,13 @@
             const symbol = isTW ? '^TWII' : '^GSPC';
             const name = isTW ? '加權指數' : 'S&P 500';
             
-            const indexVal = document.getElementById('marketIndexVal');
-            const openStatus = document.getElementById('marketOpenStatus');
-            const badge = document.getElementById('marketRegimeBadge');
-            
-            indexVal.innerHTML = `讀取中...`;
-            indexVal.className = 'text-muted';
+            DOM.marketStatusBox.innerHTML = `
+                <span>${name}</span>
+                <span class="text-muted" id="marketIndexVal">讀取中...</span>
+                <span style="border-left: 1px solid var(--border-color); padding-left: 12px;">
+                    <span class="status-dot closed"></span> <span style="font-family:'Noto Sans TC';">連線中</span>
+                </span>
+            `;
             
             const closes = await fetchIndexData(symbol, isTW);
             const status = getMarketStatus(isTW ? 'tw' : 'us');
@@ -838,31 +878,35 @@
                 let rsi = 100; if (avgLoss !== 0) { rsi = 100 - (100 / (1 + ((gains/14) / avgLoss))); }
 
                 AppState.marketRegime.isBull = (price >= ma20 && rsi >= 40);
-                badge.style.display = 'inline-block';
+                
+                let badgeHtml = '';
                 if(AppState.marketRegime.isBull) {
-                    badge.className = 'regime-badge regime-bull'; badge.innerText = '大盤濾網：偏多';
+                    badgeHtml = `<span class="regime-badge regime-bull">大盤濾網：偏多</span>`;
                 } else {
-                    badge.className = 'regime-badge regime-bear'; badge.innerText = '⚠️ 濾網觸發：弱勢 (封鎖積極買進)';
+                    badgeHtml = `<span class="regime-badge regime-bear">⚠️ 濾網觸發：弱勢 (封鎖積極買進)</span>`;
                 }
 
                 const color = change > 0 ? 'text-up' : 'text-down';
-                indexVal.className = color;
-                indexVal.innerHTML = `${price.toFixed(2)} ${change>0?'▲':'▼'} (${change>0?'+':''}${changePercent.toFixed(2)}%)`;
-                openStatus.innerHTML = `<span class="status-dot ${status.dotClass}"></span> <span style="font-family:'Noto Sans TC';">${status.text}</span>`;
+                DOM.marketStatusBox.innerHTML = `
+                    <span>${name}</span>
+                    <span class="${color}">${price.toFixed(2)} ${change>0?'▲':'▼'} (${change>0?'+':''}${changePercent.toFixed(2)}%)</span>
+                    <span style="border-left: 1px solid var(--border-color); padding-left: 12px;">
+                        <span class="status-dot ${status.dotClass}"></span> <span style="font-family:'Noto Sans TC';">${status.text}</span>
+                    </span>
+                    <span style="border-left: 1px solid var(--border-color); padding-left: 12px; margin-left: -4px;">
+                        ${badgeHtml}
+                    </span>
+                `;
             } else { 
-                indexVal.innerHTML = `連線失敗`;
-                indexVal.className = 'text-down';
-                openStatus.innerHTML = `<span class="status-dot closed"></span> <span style="font-family:'Noto Sans TC';">無法連線</span>`;
-                badge.style.display = 'none';
+                DOM.marketStatusBox.innerHTML = `
+                    <span>${name}</span>
+                    <span class="text-down">連線失敗</span>
+                    <span style="border-left: 1px solid var(--border-color); padding-left: 12px;">
+                        <span class="status-dot closed"></span> <span style="font-family:'Noto Sans TC';">無法連線</span>
+                    </span>
+                `;
             }
         }
-
-        // ================= 5. 主流程與渲染 =================
-        function updateThemeUI() {
-            if (AppState.theme === 'dark') { document.documentElement.classList.add('dark'); DOM.themeIcon.textContent = '☀️'; DOM.themeText.textContent = '亮色'; } 
-            else { document.documentElement.classList.remove('dark'); DOM.themeIcon.textContent = '🌙'; DOM.themeText.textContent = '暗色'; }
-        }
-        DOM.themeToggle.addEventListener('click', () => { AppState.theme = AppState.theme === 'dark' ? 'light' : 'dark'; localStorage.setItem('theme', AppState.theme); updateThemeUI(); });
 
         DOM.marketTabs.forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -901,7 +945,6 @@
             const filterNames = Array.from(checkedInputs).map(cb => cb.nextElementSibling.querySelector('.chip-label').innerText);
 
             if (selectedFilters.length === 0 && AppState.customStocks.length === 0) {
-                // 防呆：精確提醒文字
                 return alert("請至少勾選一個篩選條件，或新增自選股票。"); 
             }
 
