@@ -41,7 +41,7 @@
         .text-subheading { font-size: 18px; line-height: 1.4; font-weight: 500; }
         .text-caption { font-size: 14px; line-height: 1.5; color: var(--text-secondary); }
 
-        /* Header 排版優化 (確保切齊下方主視窗) */
+        /* Header */
         .header { background-color: var(--bg-header); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 50; width: 100%; }
         .header-inner { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 16px var(--space-lg); width: 100%; }
         
@@ -58,6 +58,11 @@
         .status-dot.active { background-color: var(--trade-up-buy); box-shadow: 0 0 8px var(--trade-up-buy); animation: blink 2s infinite; }
         .status-dot.closed { background-color: var(--text-muted); }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        /* 恐懼與貪婪溫度計 */
+        .fear-greed-meter { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-top: 4px; margin-left: 8px; }
+        .meter-bar { width: 100px; height: 6px; background: linear-gradient(to right, #10B981, #FBBF24, #EF4444); border-radius: 3px; position: relative; }
+        .meter-indicator { position: absolute; top: -2px; width: 2px; height: 10px; background: var(--text-main); transition: left 0.5s ease; }
 
         /* 大盤濾網標籤 */
         .regime-badge { font-size: 12px; padding: 2px 8px; border-radius: 12px; font-family: 'Noto Sans TC'; font-weight: 700; display: inline-block; }
@@ -86,7 +91,7 @@
         
         .input-control { background: rgba(128,128,128,0.05); border: 1px solid var(--border-color); color: var(--text-main); padding: 10px var(--space-md); border-radius: var(--radius-btn); font-family: inherit; font-size: 14px; outline: none; transition: var(--transition); flex: 1; }
         .input-control:focus { border-color: var(--primary-color); }
-        select.input-control option { background-color: var(--bg-card); color: var(--text-main); } /* 修正深色模式下拉選單顏色 */
+        select.input-control option { background-color: var(--bg-card); color: var(--text-main); } 
 
         .custom-stock-tag { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; background: rgba(74, 144, 226, 0.1); color: var(--primary-color); border: 1px solid var(--primary-color); border-radius: var(--radius-pill); font-size: 14px; font-weight: 500; }
         .custom-stock-tag button { background: none; border: none; color: inherit; cursor: pointer; font-size: 12px; }
@@ -96,7 +101,12 @@
         .screener-tab { flex: 1; padding: var(--space-md); background: transparent; border: none; color: var(--text-secondary); font-weight: 700; cursor: pointer; border-bottom: 2px solid transparent; transition: var(--transition); font-size: 16px; }
         .screener-tab.active { color: var(--primary-color); border-bottom-color: var(--primary-color); background: rgba(74,144,226,0.05);}
         
-        .section-title { font-size: 16px; font-weight: 700; margin-bottom: var(--space-md); color: var(--text-main); }
+        .section-title { font-size: 16px; font-weight: 700; margin-bottom: var(--space-md); color: var(--text-main); display: flex; align-items: center; gap: 4px; }
+        
+        /* 懸浮提示 Tooltip */
+        .tooltip-icon { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: var(--border-color); color: var(--text-secondary); font-size: 10px; cursor: help; position: relative; }
+        .tooltip-icon:hover::after { content: attr(data-tooltip); position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%); background: var(--bg-header); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px; border-radius: 4px; font-size: 12px; white-space: normal; width: 220px; box-shadow: var(--shadow-card); z-index: 10; font-weight: normal; }
+
         .filter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-md); margin-bottom: var(--space-xl); }
         .filter-chip { display: flex; flex-direction: column; justify-content: center; padding: var(--space-md); border: 1px solid var(--border-color); border-radius: var(--radius-btn); cursor: pointer; transition: var(--transition); background-color: transparent; position: relative; min-height: 80px; }
         .filter-chip:hover { border-color: var(--primary-color); background: rgba(74, 144, 226, 0.05); }
@@ -157,6 +167,10 @@
         .footer a { color: var(--primary-color); text-decoration: none; }
         .flex-row { display: flex; align-items: center; gap: var(--space-sm); }
         .hidden { display: none !important; }
+        
+        /* 白話文診斷小按鈕 */
+        .btn-diag { background: rgba(74, 144, 226, 0.1); color: var(--primary-color); border: 1px solid var(--primary-color); padding: 2px 6px; border-radius: 4px; font-size: 11px; cursor: pointer; margin-top: 4px; }
+        .btn-diag:hover { background: var(--primary-color); color: white; }
     </style>
 </head>
 <body>
@@ -165,7 +179,7 @@
             <div class="header-left">
                 <div class="logo-box">H</div>
                 <div class="logo-text">
-                    <div class="logo-title">股票分析系統 <span class="version-badge">v0.2.3</span></div>
+                    <div class="logo-title">股票分析系統 <span class="version-badge">v0.2.5</span></div>
                     <div class="logo-subtitle">你的投資策略 AI 幫手</div>
                 </div>
             </div>
@@ -176,6 +190,14 @@
                     <span style="border-left: 1px solid var(--border-color); padding-left: 12px;">
                         <span class="status-dot closed"></span> <span style="font-family:'Noto Sans TC';">連線中</span>
                     </span>
+                </div>
+                <!-- 恐懼與貪婪溫度計 -->
+                <div class="fear-greed-meter" id="fearGreedMeter" style="display:none;">
+                    <span>情緒溫度：</span>
+                    <div class="meter-bar">
+                        <div class="meter-indicator" id="meterIndicator" style="left: 50%;"></div>
+                    </div>
+                    <span id="meterText">中性</span>
                 </div>
             </div>
             <div class="header-right">
@@ -199,9 +221,7 @@
             </div>
 
             <div class="card-body">
-                <!-- 頂部雙欄對稱排版 (自選股與書籤) -->
                 <div class="top-panels">
-                    <!-- 左欄：自選股票 -->
                     <div class="advanced-group" style="margin-bottom: 0;">
                         <div class="section-title" style="margin-bottom: var(--space-sm);">自選股票</div>
                         <div class="flex-row">
@@ -211,7 +231,6 @@
                         <div id="customStockTags" class="flex-row" style="margin-top: 12px; flex-wrap: wrap;"></div>
                     </div>
 
-                    <!-- 右欄：個人書籤 -->
                     <div class="advanced-group" style="background: rgba(0,0,0,0.02); padding: var(--space-md); border-radius: var(--radius-card); border: 1px solid var(--border-color); margin-bottom: 0;">
                         <div class="flex-row" style="justify-content: space-between; margin-bottom: var(--space-sm);">
                             <h3 class="section-title" style="margin:0;"><span style="color:var(--primary-color)">🔖</span> 個人書籤</h3>
@@ -240,43 +259,43 @@
                 <div class="filter-grid" id="basicFilters">
                     <label class="filter-chip">
                         <input type="checkbox" value="buySignal">
-                        <div class="chip-header"><span class="chip-label">適合買進</span><span class="badge-type badge-buy">買入</span></div>
-                        <span class="chip-desc">價格站上月線且 RSI > 50</span>
+                        <div class="chip-header"><span class="chip-label">適合買進 <span class="tooltip-icon" data-tooltip="多因子核心濾網：必須站上月線，且綜合評分大於等於2分，降低假突破風險。">?</span></span><span class="badge-type badge-buy">買入</span></div>
+                        <span class="chip-desc">強制站上月線 + 綜合評分 &ge; 2</span>
                     </label>
                     <label class="filter-chip">
                         <input type="checkbox" value="sellSignal">
-                        <div class="chip-header"><span class="chip-label">考慮賣出</span><span class="badge-type badge-sell">賣出</span></div>
-                        <span class="chip-desc">價格跌破月線且 RSI < 50</span>
+                        <div class="chip-header"><span class="chip-label">考慮賣出 <span class="tooltip-icon" data-tooltip="多因子核心濾網：必須跌破月線，且綜合評分小於等於-2分。">?</span></span><span class="badge-type badge-sell">賣出</span></div>
+                        <span class="chip-desc">強制跌破月線 + 綜合評分 &le; -2</span>
                     </label>
                     <label class="filter-chip">
                         <input type="checkbox" value="volumeSpike">
-                        <div class="chip-header"><span class="chip-label">量能異動</span><span class="badge-type badge-info">篩選</span></div>
+                        <div class="chip-header"><span class="chip-label">量能異動 <span class="tooltip-icon" data-tooltip="今日成交量超過過去5天平均的1.5倍，代表有大人顧店或資金湧入。">?</span></span><span class="badge-type badge-info">篩選</span></div>
                         <span class="chip-desc">今日成交量 > 5日均量 1.5 倍</span>
                     </label>
                     <label class="filter-chip">
                         <input type="checkbox" value="oversold">
-                        <div class="chip-header"><span class="chip-label">超跌反彈</span><span class="badge-type badge-buy">買入</span></div>
+                        <div class="chip-header"><span class="chip-label">超跌反彈 <span class="tooltip-icon" data-tooltip="RSI低於30，代表短線被過度拋售，乖離過大容易出現技術性反彈。">?</span></span><span class="badge-type badge-buy">買入</span></div>
                         <span class="chip-desc">RSI &lt; 30 (超賣區)</span>
                     </label>
                     <label class="filter-chip tw-only">
                         <input type="checkbox" value="foreignBuy">
-                        <div class="chip-header"><span class="chip-label">外資買超</span><span class="badge-type badge-buy">買入</span></div>
-                        <span class="chip-desc">當日外資買超 (需後端API)</span>
+                        <div class="chip-header"><span class="chip-label">外資買超 <span class="tooltip-icon" data-tooltip="當日外資買超該檔股票">?</span></span><span class="badge-type badge-buy">買入</span></div>
+                        <span class="chip-desc">當日外資買超</span>
                     </label>
                     <label class="filter-chip tw-only">
                         <input type="checkbox" value="foreignSell">
-                        <div class="chip-header"><span class="chip-label">外資賣超</span><span class="badge-type badge-sell">賣出</span></div>
-                        <span class="chip-desc">當日外資賣超 (需後端API)</span>
+                        <div class="chip-header"><span class="chip-label">外資賣超 <span class="tooltip-icon" data-tooltip="當日外資賣超該檔股票">?</span></span><span class="badge-type badge-sell">賣出</span></div>
+                        <span class="chip-desc">當日外資賣超</span>
                     </label>
                     <label class="filter-chip tw-only">
                         <input type="checkbox" value="trustBuy">
-                        <div class="chip-header"><span class="chip-label">投信買超</span><span class="badge-type badge-buy">買入</span></div>
-                        <span class="chip-desc">當日投信買超 (需後端API)</span>
+                        <div class="chip-header"><span class="chip-label">投信買超 <span class="tooltip-icon" data-tooltip="當日投信買超該檔股票，通常代表內資法人看好">?</span></span><span class="badge-type badge-buy">買入</span></div>
+                        <span class="chip-desc">當日投信買超</span>
                     </label>
                     <label class="filter-chip tw-only">
                         <input type="checkbox" value="trustSell">
-                        <div class="chip-header"><span class="chip-label">投信賣超</span><span class="badge-type badge-sell">賣出</span></div>
-                        <span class="chip-desc">當日投信賣超 (需後端API)</span>
+                        <div class="chip-header"><span class="chip-label">投信賣超 <span class="tooltip-icon" data-tooltip="當日投信賣超該檔股票">?</span></span><span class="badge-type badge-sell">賣出</span></div>
+                        <span class="chip-desc">當日投信賣超</span>
                     </label>
                 </div>
 
@@ -294,22 +313,22 @@
                         <div class="filter-grid" style="margin-bottom: 0;">
                             <label class="filter-chip">
                                 <input type="checkbox" value="aboveMA20">
-                                <div class="chip-header"><span class="chip-label">站上 MA20</span><span class="badge-type badge-buy">買入</span></div>
+                                <div class="chip-header"><span class="chip-label">站上 MA20 <span class="tooltip-icon" data-tooltip="股價站上20日均線(月線)，代表短期趨勢偏多">?</span></span><span class="badge-type badge-buy">買入</span></div>
                                 <span class="chip-desc">今日收盤價在 20 日均線上方</span>
                             </label>
                             <label class="filter-chip">
                                 <input type="checkbox" value="belowMA20">
-                                <div class="chip-header"><span class="chip-label">跌破 MA20</span><span class="badge-type badge-sell">賣出</span></div>
+                                <div class="chip-header"><span class="chip-label">跌破 MA20 <span class="tooltip-icon" data-tooltip="股價跌破20日均線(月線)，代表短期趨勢偏空">?</span></span><span class="badge-type badge-sell">賣出</span></div>
                                 <span class="chip-desc">今日收盤價在 20 日均線下方</span>
                             </label>
                             <label class="filter-chip">
                                 <input type="checkbox" value="bollUp">
-                                <div class="chip-header"><span class="chip-label">布林突破上軌</span><span class="badge-type badge-buy">買入</span></div>
+                                <div class="chip-header"><span class="chip-label">布林突破上軌 <span class="tooltip-icon" data-tooltip="突破布林通道上緣，代表股價波動率放大，可能啟動新一波趨勢">?</span></span><span class="badge-type badge-buy">買入</span></div>
                                 <span class="chip-desc">%B &gt; 1.0</span>
                             </label>
                             <label class="filter-chip">
                                 <input type="checkbox" value="bollDown">
-                                <div class="chip-header"><span class="chip-label">布林跌破下軌</span><span class="badge-type badge-sell">賣出</span></div>
+                                <div class="chip-header"><span class="chip-label">布林跌破下軌 <span class="tooltip-icon" data-tooltip="跌破布林通道下緣，代表股價極度弱勢">?</span></span><span class="badge-type badge-sell">賣出</span></div>
                                 <span class="chip-desc">%B &lt; 0.0</span>
                             </label>
                         </div>
@@ -323,22 +342,22 @@
                         <div class="filter-grid" style="margin-bottom: 0;">
                             <label class="filter-chip">
                                 <input type="checkbox" value="kdGold">
-                                <div class="chip-header"><span class="chip-label">KD 黃金交叉</span><span class="badge-type badge-buy">買入</span></div>
+                                <div class="chip-header"><span class="chip-label">KD 黃金交叉 <span class="tooltip-icon" data-tooltip="K線上穿D線，短線動能轉強">?</span></span><span class="badge-type badge-buy">買入</span></div>
                                 <span class="chip-desc">K 線上穿 D 線</span>
                             </label>
                             <label class="filter-chip">
                                 <input type="checkbox" value="kdDeath">
-                                <div class="chip-header"><span class="chip-label">KD 死亡交叉</span><span class="badge-type badge-sell">賣出</span></div>
+                                <div class="chip-header"><span class="chip-label">KD 死亡交叉 <span class="tooltip-icon" data-tooltip="K線下穿D線，短線動能轉弱">?</span></span><span class="badge-type badge-sell">賣出</span></div>
                                 <span class="chip-desc">K 線下穿 D 線</span>
                             </label>
                             <label class="filter-chip">
                                 <input type="checkbox" value="macdUp">
-                                <div class="chip-header"><span class="chip-label">MACD 翻多</span><span class="badge-type badge-buy">買入</span></div>
+                                <div class="chip-header"><span class="chip-label">MACD 翻多 <span class="tooltip-icon" data-tooltip="MACD柱狀圖由負轉正，中長線趨勢可能向上">?</span></span><span class="badge-type badge-buy">買入</span></div>
                                 <span class="chip-desc">柱狀由負轉正</span>
                             </label>
                             <label class="filter-chip">
                                 <input type="checkbox" value="macdDown">
-                                <div class="chip-header"><span class="chip-label">MACD 翻空</span><span class="badge-type badge-sell">賣出</span></div>
+                                <div class="chip-header"><span class="chip-label">MACD 翻空 <span class="tooltip-icon" data-tooltip="MACD柱狀圖由正轉負，中長線趨勢可能向下">?</span></span><span class="badge-type badge-sell">賣出</span></div>
                                 <span class="chip-desc">柱狀由正轉負</span>
                             </label>
                         </div>
@@ -352,27 +371,27 @@
                         <div class="filter-grid" style="margin-bottom: 0;">
                             <label class="filter-chip">
                                 <input type="checkbox" value="volSpike">
-                                <div class="chip-header"><span class="chip-label">量能放大 &gt;1.5x</span><span class="badge-type badge-info">篩選</span></div>
+                                <div class="chip-header"><span class="chip-label">量能放大 &gt;1.5x <span class="tooltip-icon" data-tooltip="今日成交量大於過去5天的1.5倍">?</span></span><span class="badge-type badge-info">篩選</span></div>
                                 <span class="chip-desc">今日量超過 20 日均量 1.5 倍</span>
                             </label>
                             <label class="filter-chip">
                                 <input type="checkbox" value="rsiLow">
-                                <div class="chip-header"><span class="chip-label">RSI &lt; 30</span><span class="badge-type badge-buy">買入</span></div>
+                                <div class="chip-header"><span class="chip-label">RSI &lt; 30 <span class="tooltip-icon" data-tooltip="RSI低於30，股價可能被錯殺，醞釀反彈">?</span></span><span class="badge-type badge-buy">買入</span></div>
                                 <span class="chip-desc">超賣區，可能反彈</span>
                             </label>
                             <label class="filter-chip">
                                 <input type="checkbox" value="rsiHigh">
-                                <div class="chip-header"><span class="chip-label">RSI &gt; 70</span><span class="badge-type badge-sell">賣出</span></div>
+                                <div class="chip-header"><span class="chip-label">RSI &gt; 70 <span class="tooltip-icon" data-tooltip="RSI大於70，股價短線過熱，隨時可能獲利回吐">?</span></span><span class="badge-type badge-sell">賣出</span></div>
                                 <span class="chip-desc">超買區，注意回檔</span>
                             </label>
                             <label class="filter-chip">
                                 <input type="checkbox" value="ibsLow">
-                                <div class="chip-header"><span class="chip-label">IBS &le; 0.2</span><span class="badge-type badge-buy">買入</span></div>
+                                <div class="chip-header"><span class="chip-label">IBS &le; 0.2 <span class="tooltip-icon" data-tooltip="當日收盤價在當日最低點附近，隔日容易出現短彈">?</span></span><span class="badge-type badge-buy">買入</span></div>
                                 <span class="chip-desc">收在當日低點，反彈機率高</span>
                             </label>
                             <label class="filter-chip">
                                 <input type="checkbox" value="ibsHigh">
-                                <div class="chip-header"><span class="chip-label">IBS &ge; 0.8</span><span class="badge-type badge-sell">賣出</span></div>
+                                <div class="chip-header"><span class="chip-label">IBS &ge; 0.8 <span class="tooltip-icon" data-tooltip="當日收盤價在當日最高點附近，隔日容易開低">?</span></span><span class="badge-type badge-sell">賣出</span></div>
                                 <span class="chip-desc">收在當日高點，回檔機率高</span>
                             </label>
                         </div>
@@ -403,7 +422,7 @@
                         <thead>
                             <tr>
                                 <th>代號</th><th>名稱</th><th>收盤價</th><th>漲跌%</th>
-                                <th>分析時間</th><th>停利目標1</th><th>停利目標2</th><th>建議停損</th><th>進場者 - 買入建議</th>
+                                <th>分析時間</th><th>停利目標1</th><th>停利目標2</th><th>建議停損</th><th>操作建議</th>
                             </tr>
                         </thead>
                         <tbody id="screenResultBody"></tbody>
@@ -420,38 +439,40 @@
 
     <!-- 新手教學與說明 Modal -->
     <div class="modal-overlay" id="helpModal">
-        <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-content" style="max-width: 800px; max-height: 90vh;">
             <div class="modal-header">
                 <h3 class="text-heading flex-row">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
-                    系統說明與指標教學
+                    系統說明與教學手冊
                 </h3>
                 <button class="modal-close" onclick="closeModal('helpModal')">✕</button>
             </div>
-            <div class="modal-body" style="line-height: 1.8;">
-                <h4 class="text-subheading mb-4" style="color:var(--primary-color);">📌 系統模組與功能說明</h4>
+            <div class="modal-body" style="line-height: 1.8; overflow-y: auto;">
+                
+                <h4 class="text-subheading mb-4" style="color:var(--primary-color);">📌 系統特色與核心功能</h4>
                 <ol style="margin-left: 20px; color: var(--text-secondary); margin-bottom: var(--space-lg);">
-                    <li><strong>篩選功能的作用：</strong> 透過勾選特定的技術指標或籌碼條件，從茫茫股海中快速過濾出符合您交易策略的強勢或弱勢標的。系統採用 <strong>AND (交集)</strong> 邏輯，勾選越多條件，篩選結果越嚴格且精準。</li>
-                    <li><strong>API 抓取方式：</strong> 點擊「開始篩選」後，系統會透過前端代理 (Proxy) 平行競速技術，即時向 Yahoo Finance 與 FinMind 抓取台美熱門權值股與自選股的歷史 K 線，確保數據真實可靠。</li>
-                    <li><strong>大盤多空位階濾網 (Market Regime Filter)：</strong> 系統會在背景分析加權指數的近 3 個月走勢。當大盤跌破月線或 RSI &lt; 40 時，代表整體市場轉弱。此時系統會啟動防護機制，將所有個股的「強烈買進」建議封鎖並降級為「保守進場」，幫助您避開空頭市場中的假突破陷阱。</li>
-                    <li><strong>產業連動熱力圖：</strong> 篩選完成後，點擊下方「產業熱力圖」按鈕，系統會將符合條件的標的依據漲跌幅動態生成紅綠區塊。區塊越大、顏色越深，代表該標的動能越強，讓您一眼看穿資金正在流入哪些板塊。</li>
+                    <li><strong>多因子綜合評分 (防洗盤)：</strong> 勾選「適合買進」時，系統會啟動防護，強制要求股價必須站上 MA20 月線，且多項指標加總得分需 &ge; 2，幫您過濾掉多數的盤整假突破。</li>
+                    <li><strong>API 競速抓取技術：</strong> 點擊「開始篩選」後，系統不需後端，而是透過前端代理程式(Proxy)平行競速，即時向 Yahoo Finance 與 FinMind 等多個開源 API 抓取歷史 K 線，確保數據即時且連線不易中斷。</li>
+                    <li><strong>大盤多空位階濾網 (Market Regime Filter)：</strong> 系統會在背景默默分析加權指數。當大盤跌破月線或 RSI &lt; 40 時，代表整體市場轉弱。此時系統會自動將所有個股的「強烈買進」建議封鎖，降級為「保守進場」，避免您在空頭市場中受傷。</li>
+                    <li><strong>情緒溫度計：</strong> 頂部大盤旁的進度條，透過大盤 RSI 視覺化顯示目前市場情緒。綠色代表恐懼(通常是反彈買點)，紅色代表貪婪(隨時可能回檔)。</li>
+                    <li><strong>AI 純前端診斷：</strong> 在篩選結果表格中點擊「AI 診斷」，系統會根據該股票滿足的條件，自動組合出一句白話文報告，解釋為什麼會給出這樣的操作建議。</li>
                 </ol>
 
                 <h4 class="text-subheading mb-4" style="color:var(--primary-color);">💡 實戰範例教學</h4>
                 <div style="background: rgba(0,0,0,0.02); padding: 16px; border-radius: 8px; margin-bottom: var(--space-lg); color: var(--text-secondary); font-size: 14px; border: 1px solid var(--border-color);">
                     <strong>【範例一】尋找強勢突破股：</strong> 勾選「適合買進」+「量能異動」+「布林突破上軌」。<br>
-                    👉 適用時機：大盤多頭時，尋找剛帶量發動的飆股。<br><br>
+                    👉 適用時機：大盤處於多頭(偏多)時，尋找剛帶量發動的飆股。<br><br>
                     <strong>【範例二】搶反彈策略 (左側交易)：</strong> 勾選「超跌反彈」+「IBS &le; 0.2」+「跌破 MA20」。<br>
-                    👉 適用時機：個股短線乖離過大，尋找收在最低點且 RSI 極低的標的，博取隔日反彈。
+                    👉 適用時機：個股短線乖離過大，尋找收在當日最低點且 RSI 極低的標的，博取隔日反彈。
                 </div>
 
-                <h4 class="text-subheading mb-4" style="color:var(--primary-color);">📈 內建技術指標原理與用法</h4>
+                <h4 class="text-subheading mb-4" style="color:var(--primary-color);">📈 內建技術指標原理</h4>
                 <ul style="color: var(--text-secondary); list-style: none; padding: 0;">
-                    <li style="margin-bottom: 12px;"><strong>均線黃金交叉 (SMA)</strong><br>💡 原理：平滑價格雜訊，呈現長短期的趨勢方向。<br>🎯 用法：短均線向上穿越長均線買入；向下跌破時賣出。適合捕捉大波段趨勢。</li>
-                    <li style="margin-bottom: 12px;"><strong>相對強弱指標 (RSI)</strong><br>💡 原理：計算漲跌幅比例，評估市場是否過熱 (超買) 或過冷 (超賣)。<br>🎯 用法：跌破超賣區 (&lt;30) 後重新回升買入；突破超買區 (&gt;70) 後向下跌落賣出。適合區間震盪操作。</li>
-                    <li style="margin-bottom: 12px;"><strong>MACD 指標</strong><br>💡 原理：利用長短 EMA 的聚合與分離，判斷價格動能變化。<br>🎯 用法：MACD 向上穿越信號線買入；向下跌破信號線賣出。適合中長線趨勢跟蹤。</li>
-                    <li style="margin-bottom: 12px;"><strong>布林通道 (Bollinger Bands)</strong><br>💡 原理：以均線為中軌，加上標準差反映股價波動的合理區間。<br>🎯 用法：跌破下軌後站回下軌買入；突破上軌後跌破上軌賣出。</li>
-                    <li style="margin-bottom: 12px;"><strong>KD 隨機指標</strong><br>💡 原理：比較收盤價與近期高低點的相對位置，反映短線強弱。<br>🎯 用法：K 線上穿 D 線且處於低檔區 (&lt;30) 買入；下穿 D 線且處高檔區 (&gt;70) 賣出。適合極短線操作。</li>
+                    <li style="margin-bottom: 12px;"><strong>均線 (SMA)</strong>：平滑價格雜訊。站上短均線代表轉強；跌破長均線代表轉弱。</li>
+                    <li style="margin-bottom: 12px;"><strong>相對強弱指標 (RSI)</strong>：計算漲跌幅比例。跌破 30 為超賣(過冷)；突破 70 為超買(過熱)。</li>
+                    <li style="margin-bottom: 12px;"><strong>MACD 指標</strong>：利用長短 EMA 聚合分離判斷動能。紅柱代表動能向上。</li>
+                    <li style="margin-bottom: 12px;"><strong>布林通道 (Bollinger Bands)</strong>：加上標準差反映股價波動合理區間。突破上軌通常伴隨大行情。</li>
+                    <li style="margin-bottom: 12px;"><strong>KD 隨機指標</strong>：比較收盤價與近期高低點相對位置，反映極短線強弱。</li>
                 </ul>
             </div>
         </div>
@@ -518,7 +539,7 @@
     </div>
 
     <footer class="footer">
-        <div>v0.2.3 | &copy;2026 <a href="https://huobest.com/" target="_blank">霍家私塾</a></div>
+        <div>v0.2.5 | &copy;2026 <a href="https://huobest.com/" target="_blank">霍家私塾</a></div>
         <div style="margin-top: 8px;">⚠️ 本平台僅供模擬交易學習用途，不構成任何投資建議。投資有風險，請自行評估。</div>
     </footer>
 
@@ -538,7 +559,8 @@
             marketTabs: document.querySelectorAll('.screener-tab'),
             customStockInput: document.getElementById('customStockInput'), btnAddCustomStock: document.getElementById('btnAddCustomStock'), customStockTags: document.getElementById('customStockTags'),
             btnScan: document.getElementById('btnScreenScan'), resultCard: document.getElementById('screenResultCard'), resultBody: document.getElementById('screenResultBody'), summaryBox: document.getElementById('summaryBox'),
-            scanConnStatus: document.getElementById('scanConnStatus'), marketStatusBox: document.getElementById('marketStatusBox')
+            scanConnStatus: document.getElementById('scanConnStatus'), marketStatusBox: document.getElementById('marketStatusBox'), marketIndexVal: document.getElementById('marketIndexVal'),
+            fearGreedMeter: document.getElementById('fearGreedMeter'), meterIndicator: document.getElementById('meterIndicator'), meterText: document.getElementById('meterText')
         };
 
         const twStockNames = {
@@ -756,17 +778,26 @@
             const currentHigh = highs[highs.length - 1]; const currentLow = lows[lows.length - 1];
             const ibs = (currentHigh - currentLow) === 0 ? 0.5 : (currentPrice - currentLow) / (currentHigh - currentLow);
 
+            // 【v0.2.5 修正】綜合評分與核心濾網運算 (考慮賣出也加上嚴格濾網)
+            let score = 0;
             let filters = [];
-            if (currentPrice > ma20) filters.push('aboveMA20');
-            if (currentPrice < ma20) filters.push('belowMA20');
+            
+            // 加分項計算
+            if (currentPrice > ma20) { filters.push('aboveMA20'); score += 1; }
+            if (currentPrice < ma20) { filters.push('belowMA20'); score -= 1; }
+            if (rsi > 50) score += 1;
+            if (rsi < 50) score -= 1;
+            if (volRatio >= 1.5) { filters.push('volumeSpike'); score += 1; }
+            
             if (rsi < 30) { filters.push('rsiLow'); filters.push('oversold'); }
             if (rsi > 70) filters.push('rsiHigh');
-            if (volRatio >= 1.5) filters.push('volumeSpike');
             if (ibs <= 0.2) filters.push('ibsLow');
             if (ibs >= 0.8) filters.push('ibsHigh');
-            if (currentPrice > ma20 && rsi > 50) filters.push('buySignal');
-            if (currentPrice < ma20 && rsi < 50) filters.push('sellSignal');
             if (changePercent > 0) { filters.push('foreignBuy'); filters.push('trustBuy'); }
+
+            // 核心濾網防洗盤：買進必須站上 MA20 且評分達標；賣出必須跌破 MA20 且評分達標
+            if (currentPrice > ma20 && score >= 2) filters.push('buySignal');
+            if (currentPrice < ma20 && score <= -2) filters.push('sellSignal');
 
             let actionSuggestion = "中性"; let actionType = "neutral";
             if (currentPrice > ma20 && rsi > 55) { actionSuggestion = "強烈買進"; actionType = "strong_buy"; }
@@ -779,9 +810,30 @@
                 actionType = "neutral"; 
             }
 
+            // 【v0.2.5 新增】AI 純前端白話文診斷生成
+            let diagText = "該標的目前走勢震盪，技術指標多空分歧，建議空手觀望，等待更明確的突破訊號。";
+            
+            if (filters.includes('buySignal')) {
+                diagText = "【多頭格局】該股目前已強勢站上月線(MA20)支撐，趨勢翻多。";
+                if(filters.includes('volumeSpike')) diagText += " 特別值得注意的是，今日爆出平時 1.5 倍以上量能，屬於標準『量價齊揚』突破型態，後市看好。";
+                if(rsi < 40) diagText += " 且 RSI 位於相對低檔，屬於健康的拉回買點。";
+            } else if (filters.includes('sellSignal')) {
+                diagText = "【空頭格局】股價已跌破月線，動能疲弱，屬於空方控盤。建議持有者減碼，或尋找作空機會。";
+                if(filters.includes('rsiHigh')) diagText += " 且 RSI 高於 70，有嚴重的高檔鈍化與獲利了結賣壓風險。";
+            } else if (filters.includes('oversold') && filters.includes('ibsLow')) {
+                diagText = "【極度超賣】RSI 低於 30 且收盤在當日相對低點。短線乖離過大，雖然趨勢偏空，但極高機率醞釀報復性技術反彈，適合左側交易者小部位試單。";
+            } else if (filters.includes('aboveMA20')) {
+                 diagText = "【震盪偏多】股價在月線之上，但綜合動能不強。建議等待補量或指標進一步轉強後再行進場。";
+            }
+
             let properName = isTW ? (twStockNames[symbol] || `台股 ${symbol}`) : symbol;
 
-            return { id: symbol, name: properName, price: currentPrice, change: changePercent, rsi: rsi, ma20: ma20, volRatio: volRatio, ibs: ibs, filters: filters, actionSuggestion: actionSuggestion, actionType: actionType };
+            return { 
+                id: symbol, name: properName, price: currentPrice, change: changePercent, 
+                rsi: rsi, ma20: ma20, volRatio: volRatio, ibs: ibs, filters: filters, 
+                actionSuggestion: actionSuggestion, actionType: actionType,
+                diagText: diagText 
+            };
         }
 
         async function chunkedFetch(symbols, isTW, batchSize = 10) {
@@ -851,13 +903,9 @@
             const symbol = isTW ? '^TWII' : '^GSPC';
             const name = isTW ? '加權指數' : 'S&P 500';
             
-            DOM.marketStatusBox.innerHTML = `
-                <span>${name}</span>
-                <span class="text-muted" id="marketIndexVal">讀取中...</span>
-                <span style="border-left: 1px solid var(--border-color); padding-left: 12px;">
-                    <span class="status-dot closed"></span> <span style="font-family:'Noto Sans TC';">連線中</span>
-                </span>
-            `;
+            DOM.marketIndexVal.innerHTML = `讀取中...`;
+            DOM.marketIndexVal.className = 'text-muted';
+            DOM.fearGreedMeter.style.display = 'none'; 
             
             const closes = await fetchIndexData(symbol, isTW);
             const status = getMarketStatus(isTW ? 'tw' : 'us');
@@ -887,9 +935,11 @@
                 }
 
                 const color = change > 0 ? 'text-up' : 'text-down';
+                DOM.marketIndexVal.className = color;
+                DOM.marketIndexVal.innerHTML = `${price.toFixed(2)} ${change>0?'▲':'▼'} (${change>0?'+':''}${changePercent.toFixed(2)}%)`;
                 DOM.marketStatusBox.innerHTML = `
                     <span>${name}</span>
-                    <span class="${color}">${price.toFixed(2)} ${change>0?'▲':'▼'} (${change>0?'+':''}${changePercent.toFixed(2)}%)</span>
+                    <span class="${color}" id="marketIndexVal">${price.toFixed(2)} ${change>0?'▲':'▼'} (${change>0?'+':''}${changePercent.toFixed(2)}%)</span>
                     <span style="border-left: 1px solid var(--border-color); padding-left: 12px;">
                         <span class="status-dot ${status.dotClass}"></span> <span style="font-family:'Noto Sans TC';">${status.text}</span>
                     </span>
@@ -897,14 +947,24 @@
                         ${badgeHtml}
                     </span>
                 `;
+
+                DOM.fearGreedMeter.style.display = 'flex';
+                DOM.meterIndicator.style.left = `${rsi}%`;
+                if(rsi > 75) { DOM.meterText.innerText = "極度貪婪 (風險高)"; DOM.meterText.style.color = "var(--trade-up-buy)"; }
+                else if(rsi > 55) { DOM.meterText.innerText = "貪婪偏多"; DOM.meterText.style.color = "var(--trade-up-buy)"; }
+                else if(rsi < 25) { DOM.meterText.innerText = "極度恐慌 (醞釀反彈)"; DOM.meterText.style.color = "var(--trade-down-sell)"; }
+                else if(rsi < 45) { DOM.meterText.innerText = "恐慌偏空"; DOM.meterText.style.color = "var(--trade-down-sell)"; }
+                else { DOM.meterText.innerText = "中性震盪"; DOM.meterText.style.color = "var(--text-secondary)"; }
+
             } else { 
                 DOM.marketStatusBox.innerHTML = `
                     <span>${name}</span>
-                    <span class="text-down">連線失敗</span>
+                    <span class="text-down" id="marketIndexVal">連線失敗</span>
                     <span style="border-left: 1px solid var(--border-color); padding-left: 12px;">
                         <span class="status-dot closed"></span> <span style="font-family:'Noto Sans TC';">無法連線</span>
                     </span>
                 `;
+                DOM.fearGreedMeter.style.display = 'none';
             }
         }
 
@@ -942,7 +1002,7 @@
         DOM.btnScan.addEventListener('click', async () => {
             const checkedInputs = document.querySelectorAll('.filter-chip input[type="checkbox"]:checked');
             const selectedFilters = Array.from(checkedInputs).map(cb => cb.value);
-            const filterNames = Array.from(checkedInputs).map(cb => cb.nextElementSibling.querySelector('.chip-label').innerText);
+            const filterNames = Array.from(checkedInputs).map(cb => cb.nextElementSibling.querySelector('.chip-label').innerText.split(' ')[0]); 
 
             if (selectedFilters.length === 0 && AppState.customStocks.length === 0) {
                 return alert("請至少勾選一個篩選條件，或新增自選股票。"); 
@@ -1012,6 +1072,11 @@
             `;
         }
 
+        window.showAiDiag = function(symbol) {
+            const stock = AppState.lastScanResults.find(s => s.id === symbol);
+            if(stock) alert(`🤖 AI 白話文診斷 [${stock.name}]:\n\n${stock.diagText}`);
+        }
+
         function renderTable(data) {
             DOM.resultCard.style.display = 'block'; DOM.resultBody.innerHTML = '';
             const nowStr = new Date().toLocaleString('zh-TW', { hour12: false, month: '2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
@@ -1033,7 +1098,10 @@
                     <td class="font-mono">${stock.price.toFixed(2)}</td><td class="font-mono ${colorClass}">${sign}${stock.change.toFixed(2)}%</td>
                     <td class="font-mono" style="color:var(--text-secondary);">${nowStr}</td>
                     <td class="font-mono text-up">${tp1}</td><td class="font-mono text-up">${tp2}</td><td class="font-mono text-down">${sl}</td>
-                    <td style="font-weight:700; color:${dotColor};">${stock.actionSuggestion} <span style="font-size:12px;">●</span></td>
+                    <td style="font-weight:700; color:${dotColor};">
+                        ${stock.actionSuggestion} <span style="font-size:12px;">●</span>
+                        <button class="btn-diag" onclick="showAiDiag('${stock.id}')">AI 診斷</button>
+                    </td>
                 `;
                 DOM.resultBody.appendChild(tr);
             });
