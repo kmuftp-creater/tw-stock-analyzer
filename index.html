@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>股票分析系統 — 你的投資策略 AI 幫手</title>
+    <title>股票分析系統 — 你的投資策略 AI 幫手 v0.3.1</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>H</text></svg>">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     
+    <!-- 引入 Chart.js 作為 AI 診斷的圖表引擎 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         /* ================= 設計系統規範 ================= */
         :root {
@@ -41,7 +44,7 @@
         .text-subheading { font-size: 18px; line-height: 1.4; font-weight: 500; }
         .text-caption { font-size: 14px; line-height: 1.5; color: var(--text-secondary); }
 
-        /* Header */
+        /* Header 排版優化 */
         .header { background-color: var(--bg-header); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 50; width: 100%; }
         .header-inner { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 16px var(--space-lg); width: 100%; }
         
@@ -52,22 +55,20 @@
         .version-badge { background: rgba(255,255,255,0.1); border: 1px solid var(--border-color); font-size: 13px; padding: 2px 8px; border-radius: 12px; font-family: 'JetBrains Mono', monospace; font-weight: 500;}
         .logo-subtitle { font-size: 14px; color: var(--text-secondary); margin-top: 2px; }
 
-        .header-center { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; flex: 1; margin-left: 32px; }
+        .header-center { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; flex: 1; margin-left: 32px; }
         .market-status-box { display: flex; align-items: center; gap: 12px; background: rgba(128,128,128,0.05); padding: 6px 16px; border-radius: var(--radius-pill); border: 1px solid var(--border-color); font-family: 'JetBrains Mono', monospace; font-size: 14px; }
         .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
         .status-dot.active { background-color: var(--trade-up-buy); box-shadow: 0 0 8px var(--trade-up-buy); animation: blink 2s infinite; }
         .status-dot.closed { background-color: var(--text-muted); }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
-        /* 恐懼與貪婪溫度計 */
-        .fear-greed-meter { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-top: 4px; margin-left: 8px; }
-        .meter-bar { width: 100px; height: 6px; background: linear-gradient(to right, #10B981, #FBBF24, #EF4444); border-radius: 3px; position: relative; }
-        .meter-indicator { position: absolute; top: -2px; width: 2px; height: 10px; background: var(--text-main); transition: left 0.5s ease; }
-
-        /* 大盤濾網標籤 */
         .regime-badge { font-size: 12px; padding: 2px 8px; border-radius: 12px; font-family: 'Noto Sans TC'; font-weight: 700; display: inline-block; }
         .regime-bull { background: rgba(239, 68, 68, 0.15); color: var(--trade-up-buy); }
         .regime-bear { background: rgba(16, 185, 129, 0.15); color: var(--trade-down-sell); border: 1px solid var(--trade-down-sell); }
+
+        .fear-greed-meter { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+        .meter-bar { width: 100px; height: 6px; background: linear-gradient(to right, #10B981, #FBBF24, #EF4444); border-radius: 3px; position: relative; }
+        .meter-indicator { position: absolute; top: -2px; width: 2px; height: 10px; background: var(--text-main); transition: left 0.5s ease; }
 
         .header-right { display: flex; align-items: center; gap: var(--space-md); }
         .btn-pill { display: inline-flex; align-items: center; gap: var(--space-sm); padding: 6px 16px; border-radius: var(--radius-pill); border: 1px solid var(--border-btn); background: var(--bg-card); color: var(--text-main); font-size: 14px; font-weight: 700; cursor: pointer; transition: var(--transition); }
@@ -78,7 +79,6 @@
         .card { background-color: var(--bg-card); border-radius: var(--radius-card); border: 1px solid var(--border-color); box-shadow: var(--shadow-card); margin-bottom: var(--space-lg); overflow: hidden; }
         .card-body { padding: var(--space-lg); }
 
-        /* 頂部雙欄對稱排版 */
         .top-panels { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg); margin-bottom: var(--space-lg); }
         @media (max-width: 768px) { .top-panels { grid-template-columns: 1fr; } }
 
@@ -103,7 +103,6 @@
         
         .section-title { font-size: 16px; font-weight: 700; margin-bottom: var(--space-md); color: var(--text-main); display: flex; align-items: center; gap: 4px; }
         
-        /* 懸浮提示 Tooltip */
         .tooltip-icon { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: var(--border-color); color: var(--text-secondary); font-size: 10px; cursor: help; position: relative; }
         .tooltip-icon:hover::after { content: attr(data-tooltip); position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%); background: var(--bg-header); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px; border-radius: 4px; font-size: 12px; white-space: normal; width: 220px; box-shadow: var(--shadow-card); z-index: 10; font-weight: normal; }
 
@@ -168,29 +167,11 @@
         .flex-row { display: flex; align-items: center; gap: var(--space-sm); }
         .hidden { display: none !important; }
         
-        /* 白話文診斷小按鈕 */
         .btn-diag { background: rgba(74, 144, 226, 0.1); color: var(--primary-color); border: 1px solid var(--primary-color); padding: 2px 8px; border-radius: 4px; font-size: 12px; cursor: pointer; margin-top: 6px; display: inline-block; font-weight: bold; transition: all 0.2s;}
         .btn-diag:hover { background: var(--primary-color); color: white; }
 
-        /* AI 診斷圖表化元素 */
-        .ai-progress-bar { width: 100%; height: 8px; background: rgba(0,0,0,0.1); border-radius: 4px; margin-top: 8px; overflow: hidden;}
-        html.dark .ai-progress-bar { background: rgba(255,255,255,0.1); }
-        .ai-progress-fill { height: 100%; background: var(--primary-color); width: 0%; transition: width 0.5s ease; }
-        
-        /* 微型圖表容器 */
-        .sparkline-container { width: 100%; height: 120px; position: relative; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(0,0,0,0.02); padding: 8px; }
-        html.dark .sparkline-container { background: rgba(255,255,255,0.02); }
-        .sparkline-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        
-        /* K 線微型圖 */
-        .kline-micro-box { display: inline-block; width: 12px; height: 24px; position: relative; vertical-align: middle; margin-right: 6px; }
-        .kline-micro-shadow { position: absolute; width: 2px; height: 100%; left: 5px; top: 0; background: var(--text-main); }
-        .kline-micro-body { position: absolute; width: 100%; height: 50%; left: 0; top: 25%; border-radius: 2px; }
-        .kline-micro-up .kline-micro-shadow { background: var(--trade-up-buy); }
-        .kline-micro-up .kline-micro-body { background: var(--trade-up-buy); }
-        .kline-micro-down .kline-micro-shadow { background: var(--trade-down-sell); }
-        .kline-micro-down .kline-micro-body { background: var(--trade-down-sell); }
-        
+        /* AI 診斷圖表容器 */
+        .chart-container { position: relative; height: 250px; width: 100%; margin-top: 12px; margin-bottom: 12px;}
     </style>
 </head>
 <body>
@@ -199,26 +180,30 @@
             <div class="header-left">
                 <div class="logo-box">H</div>
                 <div class="logo-text">
-                    <div class="logo-title">股票分析系統 <span class="version-badge">v0.2.8</span></div>
+                    <div class="logo-title">股票分析系統 <span class="version-badge">v0.3.1</span></div>
                     <div class="logo-subtitle">你的投資策略 AI 幫手</div>
                 </div>
             </div>
             <div class="header-center">
+                <!-- 大盤指數與日期 -->
                 <div class="market-status-box" id="marketStatusBox">
+                    <span id="marketDate" style="color:var(--text-secondary); border-right: 1px solid var(--border-color); padding-right: 12px;">📅 讀取中</span>
                     <span>加權指數</span>
                     <span class="text-up" id="marketIndexVal">讀取中...</span>
                     <span style="border-left: 1px solid var(--border-color); padding-left: 12px;" id="marketOpenStatus">
                         <span class="status-dot closed"></span> <span style="font-family:'Noto Sans TC';">連線中</span>
                     </span>
-                    <span id="marketRegimeBadge" class="regime-badge"></span>
                 </div>
-                <!-- 恐懼與貪婪溫度計 -->
-                <div class="fear-greed-meter" id="fearGreedMeter" style="display:none;">
-                    <span>情緒溫度：</span>
-                    <div class="meter-bar">
-                        <div class="meter-indicator" id="meterIndicator" style="left: 50%;"></div>
+                <!-- 情緒溫度計與濾網觸發 -->
+                <div style="display: flex; align-items: center; gap: 16px; margin-left: 8px;">
+                    <div class="fear-greed-meter" id="fearGreedMeter" style="display:none;">
+                        <span>情緒溫度：</span>
+                        <div class="meter-bar">
+                            <div class="meter-indicator" id="meterIndicator" style="left: 50%;"></div>
+                        </div>
+                        <span id="meterText">中性</span>
                     </div>
-                    <span id="meterText">中性</span>
+                    <span id="marketRegimeBadge" class="regime-badge" style="display: none;"></span>
                 </div>
             </div>
             <div class="header-right">
@@ -396,7 +381,7 @@
                             <label class="filter-chip">
                                 <input type="checkbox" value="volSpike">
                                 <div class="chip-header"><span class="chip-label">量能放大 &gt;1.5x <span class="tooltip-icon" data-tooltip="今日成交量大於過去5天的1.5倍">?</span></span><span class="badge-type badge-info">篩選</span></div>
-                                <span class="chip-desc">今日量超過 20 日均量 1.5 倍</span>
+                                <span class="chip-desc">今日量超過 5 日均量 1.5 倍</span>
                             </label>
                             <label class="filter-chip">
                                 <input type="checkbox" value="rsiLow">
@@ -446,7 +431,7 @@
                         <thead>
                             <tr>
                                 <th>代號</th><th>名稱</th><th>收盤價</th><th>漲跌%</th>
-                                <th>分析時間</th><th>停利目標1</th><th>停利目標2</th><th>建議停損</th><th>進場/出場 建議</th>
+                                <th>停利目標1</th><th>停利目標2</th><th>建議停損</th><th>操作建議</th>
                             </tr>
                         </thead>
                         <tbody id="screenResultBody"></tbody>
@@ -467,126 +452,103 @@
             <div class="modal-header">
                 <h3 class="text-heading flex-row">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
-                    系統說明與操作手冊
+                    系統說明與教學手冊
                 </h3>
                 <button class="modal-close" onclick="closeModal('helpModal')">✕</button>
             </div>
             <div class="modal-body" style="line-height: 1.8; overflow-y: auto;">
                 
-                <h4 class="text-subheading mb-4" style="color:var(--primary-color);">📌 系統特色與如何操作</h4>
+                <h4 class="text-subheading mb-4" style="color:var(--primary-color);">🚀 快速上手三步驟</h4>
                 <ol style="margin-left: 20px; color: var(--text-secondary); margin-bottom: var(--space-lg);">
-                    <li><strong>選擇市場與條件：</strong> 在頂部切換台/美股。勾選您想要的技術條件，系統採用 <strong>AND (交集)</strong> 邏輯，勾選越多條件，篩選結果越嚴格。</li>
-                    <li><strong>API 競速抓取技術：</strong> 點擊「開始篩選」後，系統會透過多個前端代理(Proxy)平行競速，即時向 Yahoo Finance 與 FinMind 抓取歷史 K 線，確保數據即時且連線不易中斷。單次最大掃描約 100 檔權值熱門股與自選股。</li>
-                    <li><strong>大盤多空位階濾網 (Market Regime Filter)：</strong> 系統會在背景分析加權指數。當大盤跌破月線或 RSI &lt; 40 時，代表整體市場轉弱。此時系統會啟動防護機制，將所有個股的「強烈買進」建議封鎖並降級為「保守進場」，幫助您避開空頭市場中的假突破陷阱。</li>
-                    <li><strong>情緒溫度計：</strong> 頂部大盤旁的進度條，透過大盤 RSI 視覺化顯示目前市場情緒。綠色代表恐懼(超跌)，紅色代表貪婪(過熱)。</li>
-                    <li><strong>AI 前端診斷圖表化：</strong> 在篩選結果表格中點擊「AI 診斷」，系統會根據該股票滿足的條件，以動態微型 K 線圖與白話文呈現綜合技術判定與 K 線型態解析。</li>
+                    <li><strong>選擇市場與條件：</strong> 切換台股或美股，並勾選您想要的「簡易篩選」或「進階篩選」條件（所有條件為 AND 嚴格比對）。</li>
+                    <li><strong>開始篩選：</strong> 點擊「開始篩選」，系統會即時向外部開源 API 抓取資料並進行計算。</li>
+                    <li><strong>查看 AI 診斷：</strong> 掃描完成後，點擊列表中的「AI 診斷」按鈕，即可觀看視覺化走勢圖表與白話文的進出場建議。</li>
                 </ol>
 
-                <h4 class="text-subheading mb-4" style="color:var(--primary-color);">🎯 停利停損目標計算說明</h4>
-                <div style="background: rgba(0,0,0,0.02); padding: 16px; border-radius: 8px; margin-bottom: var(--space-lg); color: var(--text-secondary); font-size: 14px; border: 1px solid var(--border-color);">
-                    系統在每次篩選後，會依據該股的最新收盤價，自動為您計算出嚴格的風控點位：<br>
-                    * <strong>停利目標1：</strong> 預期上漲 <strong>+5%</strong>。適合短線操作者，達標後可先獲利了結一半部位。<br>
-                    * <strong>停利目標2：</strong> 預期上漲 <strong>+10%</strong>。適合波段操作者，達標後可分批出場或移動停損。<br>
-                    * <strong>建議停損：</strong> 容忍下跌 <strong>-5%</strong>。這是鐵的紀律，一旦跌破此價位，建議果斷停損，避免虧損擴大。
-                </div>
+                <h4 class="text-subheading mb-4" style="color:var(--primary-color);">💡 系統特色與核心功能</h4>
+                <ol style="margin-left: 20px; color: var(--text-secondary); margin-bottom: var(--space-lg);">
+                    <li><strong>多因子綜合評分 (防洗盤)：</strong> 勾選「適合買進」時，系統強制要求股價必須站上 MA20 月線，且多項指標加總需達標，幫您過濾假突破。</li>
+                    <li><strong>大盤多空位階濾網：</strong> 系統會在背景分析加權指數。當大盤轉弱時，系統會自動將所有「強烈買進」降級為「保守進場」，避免空頭受傷。</li>
+                    <li><strong>AI 純前端診斷圖表化：</strong> 在篩選結果表格中點擊「AI 診斷」，系統會根據該股票滿足的條件，以視覺化圖表（近60日K線、MA5、MA20）與白話文呈現「綜合技術判定」、「K線型態解析」與「量價關係心法」，並給予具體的買賣建議，讓新手直觀秒懂！</li>
+                    <li><strong>情緒溫度計：</strong> 頂部透過大盤 RSI 視覺化顯示情緒。綠色代表恐懼(通常是反彈買點)，紅色代表貪婪(隨時可能回檔)。</li>
+                </ol>
 
-                <h4 class="text-subheading mb-4" style="color:var(--primary-color);">💡 實戰策略範例</h4>
+                <h4 class="text-subheading mb-4" style="color:var(--primary-color);">📖 關鍵術語與參數說明</h4>
+                <ul style="color: var(--text-secondary); list-style: none; padding: 0; margin-bottom: var(--space-lg);">
+                    <li style="margin-bottom: 12px;"><strong>MA5 (周線) / MA20 (月線)：</strong> 過去 5 天與 20 天的平均收盤價。站上月線代表中期趨勢轉強，跌破代表轉弱。</li>
+                    <li style="margin-bottom: 12px;"><strong>RSI (相對強弱指標)：</strong> 衡量股價漲跌力度。低於 30 為超賣 (容易反彈)，高於 70 為超買 (容易回檔)。</li>
+                    <li style="margin-bottom: 12px;"><strong>量比：</strong> 今日成交量與過去 5 日平均成交量的比值。大於 1.5 倍代表有異常資金動能或主力介入。</li>
+                    <li style="margin-bottom: 12px;"><strong>IBS (內部強弱指標)：</strong> 衡量當日收盤價在當日震盪區間的相對位置。數值越低 (≤0.2) 代表收在最低點附近，隔日容易有技術性反彈；數值越高 (≥0.8) 代表收在最高點附近，容易遇到獲利賣壓。</li>
+                    <li style="margin-bottom: 12px;"><strong>KD (隨機指標)：</strong> 衡量近期價格強弱。K線上穿D線稱為「黃金交叉」(短線動能轉強)；K線下穿D線稱為「死亡交叉」(短線動能轉弱)。</li>
+                    <li style="margin-bottom: 12px;"><strong>K線 (Candlestick)：</strong> 紀錄一天股價走勢的圖形。實體很長的紅K(大陽線)代表買盤強勢；實體很長的黑K(大陰線)代表賣壓沉重。帶有長上影線代表遭遇反壓，長下影線代表下方有支撐。</li>
+                    <li style="margin-bottom: 12px;"><strong>MACD 與 布林通道：</strong> MACD 用於判斷中長線動能；布林通道突破上軌通常代表波動放大，可能啟動波段行情。</li>
+                    <li style="margin-bottom: 12px; padding: 8px; background: rgba(0,0,0,0.03); border-left: 4px solid var(--primary-color);">
+                        <strong>停利與停損是如何計算的？</strong><br>
+                        系統採用固定比例法（適合短波段交易）：<br>
+                        • <strong>停利目標1：</strong> 收盤價 + 5% (適合短線先入袋為安)<br>
+                        • <strong>停利目標2：</strong> 收盤價 + 10% (波段目標)<br>
+                        • <strong>建議停損：</strong> 收盤價 - 5% (跌破此價格強烈建議認賠出場)
+                    </li>
+                </ul>
+
+                <h4 class="text-subheading mb-4" style="color:var(--primary-color);">⚔️ 實戰範例教學</h4>
                 <div style="background: rgba(0,0,0,0.02); padding: 16px; border-radius: 8px; margin-bottom: var(--space-lg); color: var(--text-secondary); font-size: 14px; border: 1px solid var(--border-color);">
                     <strong>【範例一】尋找強勢突破股：</strong> 勾選「適合買進」+「量能異動」+「布林突破上軌」。<br>
                     👉 適用時機：大盤處於多頭(偏多)時，尋找剛帶量發動的飆股。<br><br>
                     <strong>【範例二】搶反彈策略 (左側交易)：</strong> 勾選「超跌反彈」+「IBS &le; 0.2」+「跌破 MA20」。<br>
                     👉 適用時機：個股短線乖離過大，尋找收在當日最低點且 RSI 極低的標的，博取隔日反彈。
                 </div>
-
-                <h4 class="text-subheading mb-4" style="color:var(--primary-color);">📈 內建技術指標原理</h4>
-                <ul style="color: var(--text-secondary); list-style: none; padding: 0;">
-                    <li style="margin-bottom: 12px;"><strong>均線 (SMA)</strong>：平滑價格雜訊。站上短均線代表轉強；跌破長均線代表轉弱。</li>
-                    <li style="margin-bottom: 12px;"><strong>相對強弱指標 (RSI)</strong>：計算漲跌幅比例。跌破 30 為超賣(過冷)；突破 70 為超買(過熱)。</li>
-                    <li style="margin-bottom: 12px;"><strong>MACD 指標</strong>：利用長短 EMA 聚合分離判斷動能。紅柱代表動能向上。</li>
-                    <li style="margin-bottom: 12px;"><strong>布林通道 (Bollinger Bands)</strong>：加上標準差反映股價波動合理區間。突破上軌通常伴隨大行情。</li>
-                    <li style="margin-bottom: 12px;"><strong>KD 隨機指標</strong>：比較收盤價與近期高低點相對位置，反映極短線強弱。</li>
-                </ul>
             </div>
         </div>
     </div>
 
-    <!-- AI 診斷 Modal (圖表化白話文) -->
+    <!-- AI 診斷 Modal -->
     <div class="modal-overlay" id="aiDiagModal">
-        <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-content" style="max-width: 750px;">
             <div class="modal-header">
                 <h3 class="text-heading flex-row" id="aiDiagTitle" style="color:var(--primary-color)">🤖 AI 診斷報告</h3>
                 <button class="modal-close" onclick="closeModal('aiDiagModal')">✕</button>
             </div>
             <div class="modal-body" style="line-height: 1.8; overflow-y: auto;">
                 
-                <!-- 綜合技術判定 (含進度條與微型走勢圖) -->
+                <!-- 視覺化圖表區塊 -->
+                <div style="margin-bottom: var(--space-lg);">
+                    <h4 style="font-size: 16px; margin-bottom: 8px; border-left: 4px solid #F59E0B; padding-left: 8px;">📈 近期走勢圖 (近60日)</h4>
+                    <div class="chart-container">
+                        <canvas id="aiChartCanvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- 建議區塊 -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: var(--space-lg);">
+                    <div style="background: rgba(16, 185, 129, 0.05); padding: 16px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.2);">
+                        <h4 style="font-size: 16px; margin-bottom: 8px; color: var(--trade-down-sell);">💼 持有者建議 (賣出/續抱)</h4>
+                        <div id="aiDiagHolder" style="color: var(--text-secondary); font-size: 14px; line-height: 1.6;"></div>
+                    </div>
+                    <div style="background: rgba(239, 68, 68, 0.05); padding: 16px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.2);">
+                        <h4 style="font-size: 16px; margin-bottom: 8px; color: var(--trade-up-buy);">🛒 進場者建議 (買入/觀望)</h4>
+                        <div id="aiDiagBuyer" style="color: var(--text-secondary); font-size: 14px; line-height: 1.6;"></div>
+                    </div>
+                </div>
+
+                <!-- 技術分析區塊 -->
                 <div style="margin-bottom: var(--space-lg);">
                     <h4 style="font-size: 16px; margin-bottom: 8px; border-left: 4px solid var(--primary-color); padding-left: 8px;">📊 綜合技術判定</h4>
-                    <div style="color: var(--text-secondary); background: rgba(0,0,0,0.02); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
-                        
-                        <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 8px;">
-                            <span>綜合技術評分</span>
-                            <span id="aiDiagScore" style="font-family:'JetBrains Mono'; font-weight:bold; font-size: 18px;">--</span>
-                        </div>
-
-                        <!-- 狀態標籤區 (替代複雜的MACD/KD副圖) -->
-                        <div style="display:flex; gap: 8px; margin-bottom: 12px;" id="aiDiagStatusTags"></div>
-
-                        <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 4px; margin-top: 12px;">
-                            <span>RSI 指標 (動能熱度)</span>
-                            <span id="aiDiagRsiVal" style="font-family:'JetBrains Mono'; font-weight:bold;">--</span>
-                        </div>
-                        <div class="ai-progress-bar">
-                            <div class="ai-progress-fill" id="aiDiagRsiBar"></div>
-                        </div>
-
-                        <div style="margin-top: 16px; margin-bottom: 8px; border-top: 1px dashed var(--border-color); padding-top: 12px;">
-                            <span style="font-size: 13px;">近 20 日收盤價走勢(藍線) vs MA20(黃虛線)</span>
-                            <div class="sparkline-container" id="aiDiagSparkline">
-                                <svg class="sparkline-svg" preserveAspectRatio="none" id="aiDiagSparklineSvg"></svg>
-                            </div>
-                        </div>
-
-                        <p id="aiDiagTechText" style="margin-top: 12px; font-size: 14px; margin-bottom:0; color: var(--text-main); font-weight: 500;"></p>
-                    </div>
+                    <div id="aiDiagTech" style="color: var(--text-secondary); background: rgba(0,0,0,0.02); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);"></div>
                 </div>
-
-                <!-- K線型態解析 -->
                 <div style="margin-bottom: var(--space-lg);">
                     <h4 style="font-size: 16px; margin-bottom: 8px; border-left: 4px solid var(--info-color); padding-left: 8px;">🕯️ K線型態解析</h4>
-                    <div style="color: var(--text-secondary); background: rgba(0,0,0,0.02); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
-                        <div id="aiDiagKlineTags" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom: 12px;"></div>
-                        <p id="aiDiagKlineText" style="font-size: 14px; margin-bottom:0;"></p>
-                    </div>
+                    <div id="aiDiagKline" style="color: var(--text-secondary); background: rgba(0,0,0,0.02); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);"></div>
                 </div>
-
-                <!-- 量價關係心法 -->
-                <div style="margin-bottom: var(--space-lg);">
+                <div style="margin-bottom: var(--space-md);">
                     <h4 style="font-size: 16px; margin-bottom: 8px; border-left: 4px solid var(--warning-color); padding-left: 8px;">⚖️ 量價關係心法</h4>
-                    <div style="color: var(--text-secondary); background: rgba(0,0,0,0.02); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
-                        <div style="display:flex; align-items:center; gap: 12px; margin-bottom: 8px;">
-                            <span style="font-size: 24px;" id="aiDiagVPIcon">📈</span>
-                            <strong style="color: var(--text-main);" id="aiDiagVPTitle">--</strong>
-                        </div>
-                        <p id="aiDiagVPText" style="font-size: 14px; margin-bottom:0;"></p>
-                    </div>
+                    <div id="aiDiagVP" style="color: var(--text-secondary); background: rgba(0,0,0,0.02); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);"></div>
                 </div>
-
-                <!-- 具體操作建議 (持有者/進場者) -->
-                <div>
-                    <h4 style="font-size: 16px; margin-bottom: 8px; border-left: 4px solid var(--trade-up-buy); padding-left: 8px;">🎯 具體操作建議</h4>
-                    <div style="background: rgba(239, 68, 68, 0.05); padding: 16px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.2);">
-                        <div style="margin-bottom: 12px;">
-                            <strong style="color: var(--text-main);">👜 給持有者的建議：</strong>
-                            <p id="aiDiagHolderAdv" style="margin: 4px 0 0 0; font-size: 14px; color: var(--text-secondary);"></p>
-                        </div>
-                        <div>
-                            <strong style="color: var(--text-main);">🚪 給空手進場者的建議：</strong>
-                            <p id="aiDiagEntryAdv" style="margin: 4px 0 0 0; font-size: 14px; color: var(--text-secondary);"></p>
-                        </div>
-                    </div>
+                
+                <!-- 警語 -->
+                <div class="text-caption" style="text-align: center; margin-top: 24px; padding-top: 16px; border-top: 1px dashed var(--border-color); color: var(--text-muted);">
+                    ⚠️ 以上建議僅供參考，基於技術分析計算，不構成投資建議。投資有風險，請自行評估。
                 </div>
-
             </div>
         </div>
     </div>
@@ -652,7 +614,7 @@
     </div>
 
     <footer class="footer">
-        <div>v0.2.8 | &copy;2026 <a href="https://huobest.com/" target="_blank">霍家私塾</a></div>
+        <div>v0.3.1 | &copy;2026 <a href="https://huobest.com/" target="_blank">霍家私塾</a></div>
         <div style="margin-top: 8px;">⚠️ 本平台僅供模擬交易學習用途，不構成任何投資建議。投資有風險，請自行評估。</div>
     </footer>
 
@@ -664,7 +626,8 @@
             customStocks: [],
             isConnecting: false,
             lastScanResults: [],
-            marketRegime: { isBull: true, text: "偏多" } 
+            marketRegime: { isBull: true, text: "偏多" },
+            lastDataDate: '' // 紀錄最新抓取到的資料日期
         };
 
         const DOM = {
@@ -673,7 +636,8 @@
             customStockInput: document.getElementById('customStockInput'), btnAddCustomStock: document.getElementById('btnAddCustomStock'), customStockTags: document.getElementById('customStockTags'),
             btnScan: document.getElementById('btnScreenScan'), resultCard: document.getElementById('screenResultCard'), resultBody: document.getElementById('screenResultBody'), summaryBox: document.getElementById('summaryBox'),
             scanConnStatus: document.getElementById('scanConnStatus'), marketStatusBox: document.getElementById('marketStatusBox'), marketIndexVal: document.getElementById('marketIndexVal'),
-            fearGreedMeter: document.getElementById('fearGreedMeter'), meterIndicator: document.getElementById('meterIndicator'), meterText: document.getElementById('meterText')
+            fearGreedMeter: document.getElementById('fearGreedMeter'), meterIndicator: document.getElementById('meterIndicator'), meterText: document.getElementById('meterText'),
+            marketDate: document.getElementById('marketDate'), marketRegimeBadge: document.getElementById('marketRegimeBadge')
         };
 
         const twStockNames = {
@@ -698,7 +662,9 @@
             'BMY','AMGN','MDT','GILD','ISRG','SYK','ZTS','ELV','LLY','CVS','CI'
         ];
 
-        // ================= 5. 主流程與渲染 =================
+        let aiChartInstance = null; // Chart.js 實例
+
+        // ================= UI 與事件綁定 =================
         function updateThemeUI() {
             if (AppState.theme === 'dark') { document.documentElement.classList.add('dark'); DOM.themeIcon.textContent = '☀️'; DOM.themeText.textContent = '亮色'; } 
             else { document.documentElement.classList.remove('dark'); DOM.themeIcon.textContent = '🌙'; DOM.themeText.textContent = '暗色'; }
@@ -768,12 +734,19 @@
         document.getElementById('btnDeleteBookmark').addEventListener('click', () => {
             try {
                 const name = document.getElementById('bookmarkSelect').value;
-                if(!name) return;
+                if(!name) {
+                    alert('請先選擇要刪除的書籤！');
+                    return;
+                }
                 if(!confirm(`確定要刪除書籤「${name}」嗎？`)) return; 
                 const saved = JSON.parse(localStorage.getItem('traderBookmarks') || '{}');
-                delete saved[name]; localStorage.setItem('traderBookmarks', JSON.stringify(saved));
+                delete saved[name]; 
+                localStorage.setItem('traderBookmarks', JSON.stringify(saved));
                 initBookmarks();
-            } catch(e) {}
+                alert(`已成功刪除書籤「${name}」`);
+            } catch(e) {
+                alert("刪除失敗，請檢查瀏覽器設定。");
+            }
         });
 
         document.getElementById('btnExportBookmarks').addEventListener('click', (e) => {
@@ -799,7 +772,7 @@
             reader.readAsText(file); e.target.value = ''; 
         });
 
-        // ================= 獨家：多平台競速抓取 =================
+        // ================= 多平台競速抓取 =================
         const proxyUrls = [
             'https://api.allorigins.win/raw?url=',
             'https://api.codetabs.com/v1/proxy?quest='
@@ -825,36 +798,55 @@
         }
 
         async function fetchYahoo(symbolWithSuffix) {
-            const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbolWithSuffix}?range=3mo&interval=1d`;
+            const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbolWithSuffix}?range=4mo&interval=1d`;
             const json = await fetchWithProxyRace(url);
             const quote = json?.chart?.result?.[0]?.indicators?.quote?.[0];
-            if (!quote || !quote.close || !Array.isArray(quote.close)) throw new Error('Yahoo Data Invalid');
+            const timestamps = json?.chart?.result?.[0]?.timestamp;
             
-            let closes = [], highs = [], lows = [], volumes = [], opens = [];
+            if (!quote || !quote.close || !Array.isArray(quote.close) || !timestamps) throw new Error('Yahoo Data Invalid');
+            
+            let closes = [], highs = [], lows = [], volumes = [], opens = [], dates = [];
             for(let i=0; i<quote.close.length; i++) {
-                if(quote.close[i] != null && quote.high[i] != null && quote.low[i] != null && quote.volume[i] != null && quote.open[i] != null) {
+                if(quote.close[i] != null && quote.high[i] != null && quote.low[i] != null && quote.volume[i] != null && quote.open[i] != null && timestamps[i]) {
                     closes.push(quote.close[i]); highs.push(quote.high[i]); lows.push(quote.low[i]); volumes.push(quote.volume[i]); opens.push(quote.open[i]);
+                    const d = new Date(timestamps[i] * 1000);
+                    dates.push(`${d.getFullYear()}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getDate().toString().padStart(2,'0')}`);
                 }
             }
             if (closes.length < 20) throw new Error('Not enough data');
-            return { closes, highs, lows, volumes, opens };
+            return { closes, highs, lows, volumes, opens, dates };
         }
 
         async function fetchFinMind(symbol) {
-            const d = new Date(); d.setMonth(d.getMonth() - 3);
+            const d = new Date(); d.setMonth(d.getMonth() - 4);
             const startStr = d.toISOString().split('T')[0];
             const url = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=${symbol}&start_date=${startStr}`;
             const json = await fetchWithProxyRace(url);
             if (!json || json.msg !== 'success' || !json.data || json.data.length < 20) throw new Error('FinMind Data Invalid');
             
-            let closes = json.data.map(d => d.close);
-            let highs = json.data.map(d => d.max);
-            let lows = json.data.map(d => d.min);
-            let volumes = json.data.map(d => d.Trading_Volume);
-            let opens = json.data.map(d => d.open);
-            return { closes, highs, lows, volumes, opens };
+            let closes = json.data.map(item => item.close);
+            let highs = json.data.map(item => item.max);
+            let lows = json.data.map(item => item.min);
+            let volumes = json.data.map(item => item.Trading_Volume);
+            let opens = json.data.map(item => item.open);
+            let dates = json.data.map(item => item.date.replace(/-/g, '/'));
+            return { closes, highs, lows, volumes, opens, dates };
         }
         
+        function calculateMA(dataArray, windowSize) {
+            let result = [];
+            for (let i = 0; i < dataArray.length; i++) {
+                if (i < windowSize - 1) {
+                    result.push(null);
+                } else {
+                    let sum = 0;
+                    for (let j = 0; j < windowSize; j++) sum += dataArray[i - j];
+                    result.push(sum / windowSize);
+                }
+            }
+            return result;
+        }
+
         async function fetchStockData(symbol, isTW) {
             let rawData;
             try {
@@ -869,22 +861,18 @@
                 }
             } catch(e) { return null; }
 
-            const { closes, highs, lows, volumes, opens } = rawData;
+            const { closes, highs, lows, volumes, opens, dates } = rawData;
                 
             const today = { open: opens[opens.length-1], high: highs[highs.length-1], low: lows[lows.length-1], close: closes[closes.length-1], volume: volumes[volumes.length-1] };
             const yesterday = { open: opens[opens.length-2], high: highs[highs.length-2], low: lows[lows.length-2], close: closes[closes.length-2], volume: volumes[volumes.length-2] };
                 
             const currentPrice = today.close; const prevPrice = yesterday.close;
             const changePercent = ((currentPrice - prevPrice) / prevPrice) * 100;
+            const dataDate = dates[dates.length-1];
+            AppState.lastDataDate = dataDate; // 更新全域最後資料日期
             
-            // 計算 MA 陣列供圖表使用
-            let ma20Arr = [];
-            for (let i = 19; i < closes.length; i++) {
-                let sum = 0;
-                for (let j = i - 19; j <= i; j++) sum += closes[j];
-                ma20Arr.push(sum / 20);
-            }
-            const ma20 = ma20Arr[ma20Arr.length - 1];
+            let sum20 = 0; for (let i = closes.length - 20; i < closes.length; i++) sum20 += closes[i];
+            const ma20 = sum20 / 20;
 
             let sumVol5 = 0; for (let i = volumes.length - 5; i < volumes.length; i++) sumVol5 += volumes[i];
             const avgVol5 = sumVol5 / 5; const currentVol = today.volume;
@@ -901,7 +889,7 @@
             const currentHigh = today.high; const currentLow = today.low;
             const ibs = (currentHigh - currentLow) === 0 ? 0.5 : (currentPrice - currentLow) / (currentHigh - currentLow);
 
-            // K線特徵計算 (供AI診斷使用)
+            // K線特徵計算
             const body = Math.abs(today.close - today.open);
             const upperShadow = today.high - Math.max(today.open, today.close);
             const lowerShadow = Math.min(today.open, today.close) - today.low;
@@ -913,6 +901,15 @@
                 hasLongLower: lowerShadow > body * 1.5 && lowerShadow > today.close * 0.01,
                 isGapUp: today.low > yesterday.high,
                 isGapDown: today.high < yesterday.low
+            };
+
+            // 圖表用的歷史數據 (切取最後 60 筆)
+            const sliceCount = -60;
+            const historyObj = {
+                dates: dates.slice(sliceCount),
+                closes: closes.slice(sliceCount),
+                ma5: calculateMA(closes, 5).slice(sliceCount),
+                ma20: calculateMA(closes, 20).slice(sliceCount)
             };
 
             let score = 0;
@@ -935,21 +932,15 @@
             if (currentPrice > ma20 && score >= 2) filters.push('buySignal');
             if (currentPrice < ma20 && score <= -2) filters.push('sellSignal');
 
-            let actionSuggestion = "中性"; let actionType = "neutral"; let entryExitSuggestion = "🔵 觀望";
-            if (currentPrice > ma20 && rsi > 55) { 
-                actionSuggestion = "強烈買進"; actionType = "strong_buy"; entryExitSuggestion = "🟢 積極進場";
-            } else if (currentPrice > ma20 && rsi <= 55) { 
-                actionSuggestion = "偏多觀望"; actionType = "buy"; entryExitSuggestion = "🟡 理想進場";
-            } else if (currentPrice < ma20 && rsi < 45) { 
-                actionSuggestion = "強烈賣出"; actionType = "strong_sell"; entryExitSuggestion = "🔴 賣出 / 減碼";
-            } else if (currentPrice < ma20 && rsi >= 45) { 
-                actionSuggestion = "偏空觀望"; actionType = "sell"; entryExitSuggestion = "🟠 伺機賣出";
-            }
+            let actionSuggestion = "中性"; let actionType = "neutral";
+            if (currentPrice > ma20 && rsi > 55) { actionSuggestion = "強烈買進"; actionType = "strong_buy"; }
+            else if (currentPrice > ma20 && rsi <= 55) { actionSuggestion = "偏多觀望"; actionType = "buy"; }
+            else if (currentPrice < ma20 && rsi < 45) { actionSuggestion = "強烈賣出"; actionType = "strong_sell"; }
+            else if (currentPrice < ma20 && rsi >= 45) { actionSuggestion = "偏空觀望"; actionType = "sell"; }
 
             if (!AppState.marketRegime.isBull && actionType === 'strong_buy') {
                 actionSuggestion = "保守進場 (大盤轉弱)";
                 actionType = "neutral"; 
-                entryExitSuggestion = "🔵 保守進場";
             }
 
             let properName = isTW ? (twStockNames[symbol] || `台股 ${symbol}`) : symbol;
@@ -958,9 +949,7 @@
                 id: symbol, name: properName, price: currentPrice, change: changePercent, 
                 rsi: rsi, ma20: ma20, volRatio: volRatio, ibs: ibs, filters: filters, 
                 actionSuggestion: actionSuggestion, actionType: actionType, kline: kline,
-                entryExitSuggestion: entryExitSuggestion, score: score,
-                closes20: closes.slice(-20),
-                ma20History: ma20Arr.slice(-20) // 取最後 20 天的 MA20 畫圖用
+                dataDate: dataDate, history: historyObj
             };
         }
 
@@ -986,7 +975,7 @@
             return results;
         }
 
-        // ================= 4. 大盤指數與濾網判斷 =================
+        // ================= 大盤指數與濾網判斷 =================
         function getMarketStatus(market) {
             const now = new Date(); let isOpen = false;
             if (market === 'tw') {
@@ -1007,8 +996,18 @@
                 const data = await fetchWithProxyRace(url);
                 if (data && data.chart && data.chart.result) {
                     const result = data.chart.result[0];
-                    const closes = result.indicators.quote[0].close.filter(c => c !== null);
-                    if (closes.length >= 20) return closes;
+                    const closes = result.indicators.quote[0].close;
+                    const timestamps = result.timestamp;
+                    
+                    let validCloses = [], validDates = [];
+                    for(let i=0; i<closes.length; i++) {
+                        if(closes[i] !== null) {
+                            validCloses.push(closes[i]);
+                            const d = new Date(timestamps[i] * 1000);
+                            validDates.push(`${d.getFullYear()}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getDate().toString().padStart(2,'0')}`);
+                        }
+                    }
+                    if (validCloses.length >= 20) return { closes: validCloses, dates: validDates };
                 }
             } catch (e) {}
 
@@ -1019,31 +1018,35 @@
                     const url = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=TAIEX&start_date=${startStr}`;
                     const data = await fetchWithProxyRace(url);
                     if (data && data.msg === 'success' && data.data) {
-                        return data.data.map(item => item.close);
+                        const closes = data.data.map(item => item.close);
+                        const dates = data.data.map(item => item.date.replace(/-/g, '/'));
+                        return { closes, dates };
                     }
                 } catch(e) {}
             }
             return null;
         }
 
-        window.fetchMarketIndex = async function(isTW) {
+        async function fetchMarketIndex(isTW) {
             const symbol = isTW ? '^TWII' : '^GSPC';
             const name = isTW ? '加權指數' : 'S&P 500';
             
-            if (!DOM.marketIndexVal) {
-                console.error("DOM.marketIndexVal is null");
-                return;
-            }
             DOM.marketIndexVal.innerHTML = `讀取中...`;
             DOM.marketIndexVal.className = 'text-muted';
-            if (DOM.fearGreedMeter) DOM.fearGreedMeter.style.display = 'none'; 
+            DOM.fearGreedMeter.style.display = 'none'; 
+            DOM.marketRegimeBadge.style.display = 'none';
             
-            const closes = await fetchIndexData(symbol, isTW);
+            const indexData = await fetchIndexData(symbol, isTW);
             const status = getMarketStatus(isTW ? 'tw' : 'us');
             
-            if (closes && closes.length >= 20) {
-                const price = closes[closes.length - 1]; const prev = closes[closes.length - 2];
-                const change = price - prev; const changePercent = (change / prev) * 100;
+            if (indexData && indexData.closes.length >= 20) {
+                const closes = indexData.closes;
+                const dates = indexData.dates;
+                const price = closes[closes.length - 1]; 
+                const prev = closes[closes.length - 2];
+                const change = price - prev; 
+                const changePercent = (change / prev) * 100;
+                const dataDate = dates[dates.length - 1];
                 
                 let sum20 = 0; for (let i = closes.length - 20; i < closes.length; i++) sum20 += closes[i];
                 const ma20 = sum20 / 20;
@@ -1058,95 +1061,45 @@
 
                 AppState.marketRegime.isBull = (price >= ma20 && rsi >= 40);
                 
-                let badgeHtml = '';
-                if(AppState.marketRegime.isBull) {
-                    badgeHtml = `<span class="regime-badge regime-bull">大盤濾網：偏多</span>`;
-                } else {
-                    badgeHtml = `<span class="regime-badge regime-bear">⚠️ 濾網觸發：弱勢 (封鎖積極買進)</span>`;
-                }
-
-                const color = change > 0 ? 'text-up' : 'text-down';
-                DOM.marketIndexVal.className = color;
-                
-                // 絕對數值與 % 數呈現
+                // 更新大盤數值與日期
+                const color = change > 0 ? 'text-up' : (change < 0 ? 'text-down' : '');
                 const sign = change > 0 ? '+' : '';
-                const displayStr = `${price.toFixed(2)}  ${sign}${change.toFixed(2)} (${sign}${changePercent.toFixed(2)}%)`;
-                DOM.marketIndexVal.innerHTML = displayStr;
+                const arrow = change > 0 ? '▲' : (change < 0 ? '▼' : '-');
+                
+                DOM.marketDate.innerHTML = `📅 ${dataDate}`;
+                DOM.marketIndexVal.className = color;
+                DOM.marketIndexVal.innerHTML = `${price.toFixed(2)} ${arrow} ${sign}${change.toFixed(2)} (${sign}${changePercent.toFixed(2)}%)`;
+                
+                document.getElementById('marketOpenStatus').innerHTML = `<span class="status-dot ${status.dotClass}"></span> <span style="font-family:'Noto Sans TC';">${status.text}</span>`;
 
-                if(DOM.marketStatusBox) {
-                    DOM.marketStatusBox.innerHTML = `
-                        <span>${name}</span>
-                        <span class="${color}" id="marketIndexVal">${displayStr}</span>
-                        <span style="border-left: 1px solid var(--border-color); padding-left: 12px;">
-                            <span class="status-dot ${status.dotClass}"></span> <span style="font-family:'Noto Sans TC';">${status.text}</span>
-                        </span>
-                        <span style="border-left: 1px solid var(--border-color); padding-left: 12px; margin-left: -4px;">
-                            ${badgeHtml}
-                        </span>
-                    `;
-                }
+                // 更新情緒溫度與濾網觸發
+                DOM.fearGreedMeter.style.display = 'flex';
+                DOM.meterIndicator.style.left = `${rsi}%`;
+                if(rsi > 75) { DOM.meterText.innerText = "極度貪婪 (風險高)"; DOM.meterText.style.color = "var(--trade-up-buy)"; }
+                else if(rsi > 55) { DOM.meterText.innerText = "貪婪偏多"; DOM.meterText.style.color = "var(--trade-up-buy)"; }
+                else if(rsi < 25) { DOM.meterText.innerText = "極度恐慌 (醞釀反彈)"; DOM.meterText.style.color = "var(--trade-down-sell)"; }
+                else if(rsi < 45) { DOM.meterText.innerText = "恐慌偏空"; DOM.meterText.style.color = "var(--trade-down-sell)"; }
+                else { DOM.meterText.innerText = "中性震盪"; DOM.meterText.style.color = "var(--text-secondary)"; }
 
-                if(DOM.fearGreedMeter) {
-                    DOM.fearGreedMeter.style.display = 'flex';
-                    DOM.meterIndicator.style.left = `${rsi}%`;
-                    if(rsi > 75) { DOM.meterText.innerText = "極度貪婪 (風險高)"; DOM.meterText.style.color = "var(--trade-up-buy)"; }
-                    else if(rsi > 55) { DOM.meterText.innerText = "貪婪偏多"; DOM.meterText.style.color = "var(--trade-up-buy)"; }
-                    else if(rsi < 25) { DOM.meterText.innerText = "極度恐慌 (醞釀反彈)"; DOM.meterText.style.color = "var(--trade-down-sell)"; }
-                    else if(rsi < 45) { DOM.meterText.innerText = "恐慌偏空"; DOM.meterText.style.color = "var(--trade-down-sell)"; }
-                    else { DOM.meterText.innerText = "中性震盪"; DOM.meterText.style.color = "var(--text-secondary)"; }
+                DOM.marketRegimeBadge.style.display = 'inline-block';
+                if(AppState.marketRegime.isBull) {
+                    DOM.marketRegimeBadge.className = 'regime-badge regime-bull';
+                    DOM.marketRegimeBadge.innerHTML = '大盤濾網：偏多';
+                } else {
+                    DOM.marketRegimeBadge.className = 'regime-badge regime-bear';
+                    DOM.marketRegimeBadge.innerHTML = '⚠️ 濾網觸發：弱勢 (封鎖積極買進)';
                 }
 
             } else { 
-                if(DOM.marketStatusBox) {
-                    DOM.marketStatusBox.innerHTML = `
-                        <span>${name}</span>
-                        <span class="text-down" id="marketIndexVal">連線失敗</span>
-                        <span style="border-left: 1px solid var(--border-color); padding-left: 12px;">
-                            <span class="status-dot closed"></span> <span style="font-family:'Noto Sans TC';">無法連線</span>
-                        </span>
-                    `;
-                }
-                if(DOM.fearGreedMeter) DOM.fearGreedMeter.style.display = 'none';
+                DOM.marketIndexVal.className = 'text-down';
+                DOM.marketIndexVal.innerHTML = '連線失敗';
+                document.getElementById('marketOpenStatus').innerHTML = `<span class="status-dot closed"></span> <span style="font-family:'Noto Sans TC';">無法連線</span>`;
+                DOM.fearGreedMeter.style.display = 'none';
+                DOM.marketRegimeBadge.style.display = 'none';
             }
         }
 
-        function updateThemeUI() {
-            if (AppState.theme === 'dark') { document.documentElement.classList.add('dark'); DOM.themeIcon.textContent = '☀️'; DOM.themeText.textContent = '亮色'; } 
-            else { document.documentElement.classList.remove('dark'); DOM.themeIcon.textContent = '🌙'; DOM.themeText.textContent = '暗色'; }
-        }
-        DOM.themeToggle.addEventListener('click', () => { AppState.theme = AppState.theme === 'dark' ? 'light' : 'dark'; localStorage.setItem('theme', AppState.theme); updateThemeUI(); });
-
-        DOM.marketTabs.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                DOM.marketTabs.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active'); AppState.market = btn.dataset.market;
-                
-                if(AppState.market === 'us') {
-                    DOM.customStockInput.placeholder = '[輸入代號，例如 AAPL]'; document.querySelectorAll('.tw-only').forEach(el => el.style.display = 'none');
-                } else {
-                    DOM.customStockInput.placeholder = '[輸入代號，例如 2330 或 0050]'; document.querySelectorAll('.tw-only').forEach(el => el.style.display = 'flex');
-                }
-                AppState.customStocks = []; renderCustomStockTags();
-                document.querySelectorAll('.filter-chip input').forEach(cb => cb.checked = false);
-                DOM.resultCard.style.display = 'none';
-                window.fetchMarketIndex(AppState.market === 'tw');
-            });
-        });
-
-        window.saveToHistory = function(total, matchCount, topNames, filtersText) {
-            try {
-                let history = JSON.parse(localStorage.getItem('traderHistory') || '[]');
-                history.unshift({
-                    time: new Date().toLocaleString('zh-TW', { hour12: false }),
-                    market: AppState.market === 'tw' ? '台股' : '美股',
-                    filters: filtersText || '自選股',
-                    total: total, matchCount: matchCount, top: topNames
-                });
-                if(history.length > 20) history.pop(); 
-                localStorage.setItem('traderHistory', JSON.stringify(history));
-            } catch(e) {}
-        }
-
+        // ================= 掃描與結果渲染 =================
         DOM.btnScan.addEventListener('click', async () => {
             const checkedInputs = document.querySelectorAll('.filter-chip input[type="checkbox"]:checked');
             const selectedFilters = Array.from(checkedInputs).map(cb => cb.value);
@@ -1177,7 +1130,7 @@
                 const sortedByChange = [...results].sort((a, b) => b.change - a.change);
                 const top5 = sortedByChange.slice(0, 5).map(s => s.name).join('、');
                 
-                window.saveToHistory(validData.length, results.length, top5, conditionText);
+                saveToHistory(validData.length, results.length, top5, conditionText);
                 renderSummary(validData.length, results, filterNames);
                 renderTable(results);
             } catch (err) {
@@ -1189,187 +1142,122 @@
             setTimeout(() => { if(!AppState.isConnecting) DOM.scanConnStatus.innerHTML = ''; }, 5000);
         });
 
-        // 繪製 SVG 微型圖 (Sparkline) 
-        window.drawSparkline = function(svgId, closes, ma20s) {
-            const svg = document.getElementById(svgId);
-            if (!svg || !closes || closes.length === 0) return;
-            
-            svg.innerHTML = ''; 
-            
-            // 找出最高最低點以決定縮放比例 (包含 closes 與 MA20)
-            const allValues = [...closes, ...ma20s].filter(v => v !== undefined && !isNaN(v));
-            const maxVal = Math.max(...allValues);
-            const minVal = Math.min(...allValues) * 0.99; // 留點底空間
-            const range = maxVal - minVal || 1;
-            
-            const width = svg.clientWidth || 100;
-            const height = svg.clientHeight || 60;
-            const stepX = width / (closes.length - 1);
-
-            // 建立折線路徑 (收盤價)
-            let pathD = `M 0,${height - ((closes[0] - minVal) / range) * height}`;
-            for (let i = 1; i < closes.length; i++) {
-                const x = i * stepX;
-                const y = height - ((closes[i] - minVal) / range) * height;
-                pathD += ` L ${x},${y}`;
-            }
-
-            const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            pathEl.setAttribute('d', pathD);
-            pathEl.setAttribute('fill', 'none');
-            pathEl.setAttribute('stroke', '#4A90E2'); // 藍線代表股價
-            pathEl.setAttribute('stroke-width', '2');
-            svg.appendChild(pathEl);
-
-            // 建立 MA20 折線路徑 (黃線)
-            if (ma20s && ma20s.length === closes.length) {
-                let maPathD = `M 0,${height - ((ma20s[0] - minVal) / range) * height}`;
-                for (let i = 1; i < ma20s.length; i++) {
-                    const x = i * stepX;
-                    const y = height - ((ma20s[i] - minVal) / range) * height;
-                    maPathD += ` L ${x},${y}`;
-                }
-                const maPathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                maPathEl.setAttribute('d', maPathD);
-                maPathEl.setAttribute('fill', 'none');
-                maPathEl.setAttribute('stroke', '#FBBF24'); // 黃線代表 MA20
-                maPathEl.setAttribute('stroke-width', '1.5');
-                maPathEl.setAttribute('stroke-dasharray', '4,4'); // 虛線
-                svg.appendChild(maPathEl);
-            }
-        }
-
         // 產生 AI 白話文診斷並開啟 Modal
         window.showAiDiag = function(symbol) {
             const stock = AppState.lastScanResults.find(s => s.id === symbol);
             if(!stock) return;
 
-            // 圖表化: 綜合評分星級
-            let stars = "";
-            if(stock.score >= 2) stars = "⭐⭐⭐⭐⭐ (強勢)";
-            else if(stock.score > 0) stars = "⭐⭐⭐ (偏多)";
-            else if(stock.score === 0) stars = "⭐⭐ (中性)";
-            else stars = "⭐ (弱勢)";
-            document.getElementById('aiDiagScore').innerText = stars;
+            // 繪製 Chart.js 走勢圖
+            if (aiChartInstance) aiChartInstance.destroy();
+            const ctx = document.getElementById('aiChartCanvas').getContext('2d');
+            const textColor = AppState.theme === 'dark' ? '#CBD5E1' : '#666666';
+            const gridColor = AppState.theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
 
-            // 圖表化: 狀態標籤 (MACD/KD示意)
-            let statusTagsHtml = '';
-            const createStatusTag = (text, isGood) => `<span style="background:${isGood?'rgba(239, 68, 68, 0.1)':'rgba(16, 185, 129, 0.1)'}; color:${isGood?'var(--trade-up-buy)':'var(--trade-down-sell)'}; border:1px solid ${isGood?'var(--trade-up-buy)':'var(--trade-down-sell)'}; padding: 2px 6px; border-radius: 4px; font-size:12px;">${text}</span>`;
-            
-            if(stock.filters.includes('macdUp')) statusTagsHtml += createStatusTag('MACD 翻多 紅柱', true);
-            else if(stock.filters.includes('macdDown')) statusTagsHtml += createStatusTag('MACD 翻空 綠柱', false);
-            
-            if(stock.filters.includes('kdGold')) statusTagsHtml += createStatusTag('KD 黃金交叉 ↗', true);
-            else if(stock.filters.includes('kdDeath')) statusTagsHtml += createStatusTag('KD 死亡交叉 ↘', false);
-            
-            if(statusTagsHtml === '') statusTagsHtml = `<span style="color:var(--text-muted); font-size:12px;">無特殊動能訊號</span>`;
-            document.getElementById('aiDiagStatusTags').innerHTML = statusTagsHtml;
+            aiChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: stock.history.dates,
+                    datasets: [
+                        { label: '收盤價', data: stock.history.closes, borderColor: '#4A90E2', backgroundColor: 'rgba(74, 144, 226, 0.1)', fill: true, tension: 0.1, pointRadius: 0, borderWidth: 2 },
+                        { label: 'MA5 (周線)', data: stock.history.ma5, borderColor: '#F59E0B', tension: 0.1, pointRadius: 0, borderWidth: 1.5, borderDash: [4, 4] },
+                        { label: 'MA20 (月線)', data: stock.history.ma20, borderColor: '#10B981', tension: 0.1, pointRadius: 0, borderWidth: 1.5 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: { legend: { labels: { color: textColor } } },
+                    scales: {
+                        x: { grid: { color: gridColor }, ticks: { color: textColor, maxTicksLimit: 8 } },
+                        y: { grid: { color: gridColor }, ticks: { color: textColor } }
+                    }
+                }
+            });
 
+            // 1. 持有者與進場者專屬建議 (依據價格、均線與RSI)
+            let holderText = ""; let buyerText = "";
+            if (stock.price > stock.ma20) {
+                if (stock.rsi > 70) {
+                    holderText = "股價短線漲幅已大，進入超買區，追價風險較高。建議可逢高分批獲利了結，或將停利點設於 MA5 周線，跌破即出場以保住利潤。";
+                    buyerText = "目前短線乖離率過大，此時進場容易被套牢或面臨回檔洗盤。建議耐心等待量縮回測均線（如 MA5 或 MA20）有守時，再考慮佈局。";
+                } else {
+                    holderText = "目前價格穩居月線 (MA20) 之上，趨勢偏多，持股續抱即可。若不想承受過大回檔風險，可參考系統計算的「停利目標1」分批出場。";
+                    buyerText = "目前技術面維持多頭格局，且大盤未明顯轉弱。建議可於今日收盤前或明日開盤逢低佈局，並將防守點設定在建議停損價或月線下方。";
+                }
+            } else {
+                if (stock.rsi < 30) {
+                    holderText = "股價跌深進入超賣區，短線隨時可能出現技術性反彈。目前不建議盲目殺低，可等待反彈至月線附近再行減碼。";
+                    buyerText = "屬於左側摸底策略！股價乖離過大醞釀反彈，極短線投資人可少量試單搶反彈，但務必嚴格設定停損（跌破前低即走），因為長線趨勢仍偏弱。";
+                } else {
+                    holderText = "趨勢已經走弱，上方均線形成蓋頭反壓。如果已經跌破您的停損點，建議嚴格執行停損，保留資金實力，切勿攤平。";
+                    buyerText = "目前為空方控盤，接刀風險極高！請務必管好手，暫時觀望，或尋找其他站上月線的強勢標的。";
+                }
+            }
 
-            // 圖表化: RSI 進度條
-            const rsiBar = document.getElementById('aiDiagRsiBar');
-            const rsiVal = document.getElementById('aiDiagRsiVal');
-            rsiBar.style.width = `${stock.rsi}%`;
-            rsiVal.innerText = stock.rsi.toFixed(2);
-            if(stock.rsi > 70) { rsiBar.style.background = 'var(--trade-down-sell)'; rsiVal.style.color = 'var(--trade-down-sell)'; }
-            else if(stock.rsi < 30) { rsiBar.style.background = 'var(--trade-up-buy)'; rsiVal.style.color = 'var(--trade-up-buy)'; }
-            else { rsiBar.style.background = 'var(--primary-color)'; rsiVal.style.color = 'var(--text-main)'; }
-
-            // 1. 基本技術面文本
-            let techText = "目前收盤價與月線糾纏，技術指標多空分歧，建議等待更明確的突破訊號。";
+            // 2. 基本技術面判定
+            let techText = "走勢震盪，技術指標多空分歧，建議等待更明確的突破訊號。";
             if (stock.filters.includes('buySignal')) {
                 techText = "【多頭格局】該股目前已強勢站上月線(MA20)支撐，趨勢翻多。若 RSI 位於相對低檔，屬於健康的拉回買點。";
             } else if (stock.filters.includes('sellSignal')) {
                 techText = "【空頭格局】股價已跌破月線，動能疲弱，屬於空方控盤。建議持有者減碼，或尋找作空機會。";
             } else if (stock.filters.includes('aboveMA20')) {
-                techText = "【震盪偏多】股價在月線之上，但綜合動能尚未爆發。建議等待補量或指標進一步轉強後再行進場。";
+                techText = "【震盪偏多】股價在月線之上，但綜合動能不強。建議等待補量或指標進一步轉強後再行進場。";
             }
 
-            // 2. K線型態
-            let klineText = "今日 K 線呈現一般震盪，無明顯極端型態。";
-            let klineTagsHtml = '';
-            
-            // 加入更直觀的 K 線圖示表示法
-            const createTag = (text, type='info', bgClass='') => `<span style="background:var(--bg-body); border:1px solid var(--border-color); padding: 4px 8px; border-radius: 4px; font-size:12px; display:inline-flex; align-items:center; gap:4px;" class="${bgClass}">${text}</span>`;
-
-            if (stock.kline.isGapUp) klineTagsHtml += createTag('🚀 向上跳空缺口 (強勢)');
-            if (stock.kline.isGapDown) klineTagsHtml += createTag('⚠️ 向下跳空缺口 (弱勢)');
-            
-            // 實體紅K/黑K 模擬圖示
-            if (stock.kline.isBigYang) {
-                klineTagsHtml += createTag(`<div class="diag-kline-item"><div class="diag-kline-shadow" style="height:14px;"></div><div class="diag-kline-body up" style="height:10px; bottom:2px;"></div></div> 實體紅K (買方強)`);
-            }
-            if (stock.kline.isBigYin) {
-                klineTagsHtml += createTag(`<div class="diag-kline-item"><div class="diag-kline-shadow" style="height:14px;"></div><div class="diag-kline-body down" style="height:10px; bottom:2px;"></div></div> 實體黑K (賣方強)`);
-            }
-            
-            if (stock.kline.hasLongUpper) klineTagsHtml += createTag('🪝 長上影線 (遇壓回落)');
-            if (stock.kline.hasLongLower) klineTagsHtml += createTag('🦿 長下影線 (低檔支撐)');
+            // 3. K線型態
+            let klineText = "近期 K 線呈現一般震盪，無明顯極端型態。";
+            let klineTags = [];
+            if (stock.kline.isGapUp) klineTags.push("向上跳空缺口 (大資金強籌，強勢表現)");
+            if (stock.kline.isGapDown) klineTags.push("向下跳空缺口 (賣壓沉重，防禦為主)");
+            if (stock.kline.isBigYang) klineTags.push("大陽線 (買方力道極強)");
+            if (stock.kline.isBigYin) klineTags.push("大陰線 (賣方力道極強)");
+            if (stock.kline.hasLongUpper) klineTags.push("長上影線 (衝高回落，上方有明顯賣壓)");
+            if (stock.kline.hasLongLower) klineTags.push("長下影線 (跌深反彈，下方具備支撐)");
 
             if (stock.kline.isGapUp && stock.kline.isBigYang && stock.volRatio >= 1.5) {
-                klineText = "🔥🔥🔥 偵測到極強烈大漲訊號：【大陽線 + 缺口 + 倍量】齊發！主升浪極可能即將啟動！";
-            } else if (klineTagsHtml !== '') {
-                klineText = "偵測到上述關鍵 K 線特徵，請搭配走勢圖與量能判斷其有效性。";
+                klineText = "🔥🔥🔥【極強烈訊號】大漲四訊號齊發 (大陽線 + 缺口 + 倍量)！主升浪極可能即將啟動，主力強勢吃貨中！";
+            } else if (klineTags.length > 0) {
+                klineText = "最新日K偵測到以下關鍵特徵：<br>• " + klineTags.join("<br>• ");
             }
-            document.getElementById('aiDiagKlineTags').innerHTML = klineTagsHtml;
 
-            // 3. 量價關係
-            let vpTitle = "量價平穩"; let vpIcon = "⚖️";
-            let vpText = "目前量價關係處於合理的中性水準，無明顯異常。";
+            // 4. 量價關係
+            let vpText = "目前量價關係處於合理的中性水準。";
             if (stock.change > 0 && stock.volRatio > 1.2) {
-                vpTitle = "出量上漲必回檔"; vpIcon = "📈";
-                vpText = "今日帶量上漲，動能強勁，但短線可能遭遇獲利了結賣壓，請留意追高風險。";
+                vpText = "【出量上漲必回檔】今日帶量上漲，動能強勁，但短線可能遭遇獲利了結賣壓，請留意追高風險。";
             } else if (stock.change < 0 && stock.volRatio > 1.2) {
-                vpTitle = "出量下跌必反彈"; vpIcon = "📉";
-                vpText = "今日爆量下跌，恐慌賣壓湧現，但也暗示可能有主力在低檔承接吸籌。";
+                vpText = "【出量下跌必反彈】今日爆量下跌，恐慌賣壓湧現，但也暗示可能有主力在低檔承接吸籌。";
             } else if (stock.change > 0 && stock.volRatio < 1) {
-                vpTitle = "縮量上漲繼續漲"; vpIcon = "🎈";
-                vpText = "今日量縮上漲，代表籌碼安定，上檔拋壓輕，有望延續漲勢。";
+                vpText = "【縮量上漲繼續漲】今日量縮上漲，代表籌碼安定，上檔拋壓輕，有望延續漲勢。";
             } else if (stock.change < 0 && stock.volRatio < 1) {
-                vpTitle = "縮量下跌繼續跌"; vpIcon = "🪂";
-                vpText = "今日量縮下跌，市場承接意願低迷，底部尚未浮現，請勿輕易摸底。";
+                vpText = "【縮量下跌繼續跌】今日量縮下跌，市場承接意願低迷，底部尚未浮現，請勿輕易摸底。";
             }
-            document.getElementById('aiDiagVPTitle').innerText = vpTitle;
-            document.getElementById('aiDiagVPIcon').innerText = vpIcon;
-
-            // 4. 具體操作建議 (持有者/進場者)
-            let holderAdv = "價格在均線附近震盪，建議【持股續抱】，並嚴守停損紀律。";
-            let entryAdv = "目前無明顯趨勢訊號，建議【觀望為主】，等待更明確的突破或回測支撐。";
-
-            if (stock.actionType === "strong_buy") {
-                holderAdv = "價格穩站均線之上，多頭趨勢強勁，可【安心持股續抱】，若獲利豐厚可考慮將停損點上移至 MA20。";
-                entryAdv = "動能強勁，可考慮【積極進場】。但請留意若短線漲幅已大，追價風險較高，分批佈局為佳。";
-            } else if (stock.actionType === "buy") {
-                holderAdv = "趨勢偏多，可【持股續抱】。";
-                entryAdv = "趨勢確認，但動能未達極度強勢，屬於【理想進場】點，建議逢回測支撐時買進。";
-            } else if (stock.actionType === "strong_sell") {
-                holderAdv = "已嚴重跌破重要支撐，趨勢偏空。若已觸及停損價位，強烈建議【果斷停損 / 減碼】，保留現金。";
-                entryAdv = "空方控盤中，底部深不可測。絕對【不建議摸底】，空手者請持續觀望。";
-            } else if (stock.actionType === "sell") {
-                holderAdv = "動能轉弱，建議【逢反彈減碼】，降低資金曝險。";
-                entryAdv = "目前處於弱勢整理，建議【觀望為主】，耐心等待底部型態確立。";
-            }
-
-            if (!AppState.marketRegime.isBull && stock.actionType.includes('buy')) {
-                entryAdv = "⚠️ 注意：雖然個股強勢，但目前【大盤環境偏空】。傾巢之下無完卵，建議【保守進場或縮小部位】，以防假突破。";
-            }
-
-            document.getElementById('aiDiagHolderAdv').innerHTML = holderAdv;
-            document.getElementById('aiDiagEntryAdv').innerHTML = entryAdv;
 
             document.getElementById('aiDiagTitle').innerText = `🤖 AI 診斷報告：${stock.name} (${stock.id})`;
-            document.getElementById('aiDiagTechText').innerHTML = techText;
-            document.getElementById('aiDiagKlineText').innerHTML = klineText;
-            document.getElementById('aiDiagVPText').innerHTML = vpText;
+            document.getElementById('aiDiagHolder').innerHTML = holderText;
+            document.getElementById('aiDiagBuyer').innerHTML = buyerText;
+            document.getElementById('aiDiagTech').innerHTML = techText;
+            document.getElementById('aiDiagKline').innerHTML = klineText;
+            document.getElementById('aiDiagVP').innerHTML = vpText;
 
             openModal('aiDiagModal');
-            
-            // 延遲繪製 SVG 確保 Modal 已經顯示有寬高
-            setTimeout(() => {
-                if(stock.closes20 && stock.ma20History) {
-                    window.drawSparkline('aiDiagSparklineSvg', stock.closes20, stock.ma20History);
-                }
-            }, 50);
+        }
+
+        // ================= 其他渲染與輔助功能 =================
+        function saveToHistory(total, matchCount, top, filters) {
+            try {
+                let history = JSON.parse(localStorage.getItem('traderHistory') || '[]');
+                const now = new Date().toLocaleString('zh-TW', { hour12: false, month: '2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+                history.unshift({
+                    time: now,
+                    market: AppState.market === 'tw' ? '🇹🇼 台股' : '🇺🇸 美股',
+                    filters: filters,
+                    matchCount: matchCount,
+                    total: total,
+                    top: top
+                });
+                if(history.length > 50) history.pop(); 
+                localStorage.setItem('traderHistory', JSON.stringify(history));
+            } catch(e) { console.error("History save error:", e); }
         }
 
         function renderSummary(totalCount, results, filterNames) {
@@ -1381,7 +1269,7 @@
             const topGainer = sortedByChange[0]; const topLoser = sortedByChange[sortedByChange.length - 1];
             const top5 = sortedByChange.slice(0, 5).map(s => `${s.name}(${s.id})`).join('、');
             const marketName = AppState.market === 'tw' ? '台股' : '美股';
-            const dateStr = new Date().toLocaleDateString('zh-TW');
+            const analyzeTimeStr = new Date().toLocaleString('zh-TW', { hour12: false, month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' });
             
             let conditionText = filterNames.length > 0 ? filterNames.join(' + ') : '自選股清單';
             if (conditionText.includes("外資") || conditionText.includes("投信")) conditionText += " (外資、投信買賣股)";
@@ -1392,7 +1280,10 @@
             DOM.summaryBox.innerHTML = `
                 <div class="summary-content" style="width: 100%;">
                     <div style="display:flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-                        <h4 style="color: var(--text-main); font-size: 16px; margin:0;">📄 ${marketName}篩選摘要 (${dateStr})</h4>
+                        <h4 style="color: var(--text-main); font-size: 16px; margin:0;">📄 ${marketName}篩選摘要</h4>
+                    </div>
+                    <div style="margin-bottom: 12px; font-family: 'JetBrains Mono'; font-size: 13px; color: var(--primary-color);">
+                        📊 資料收盤日期：${AppState.lastDataDate || '最新'} | ⏱️ 產出時間：${analyzeTimeStr}
                     </div>
                     <div>嚴格比對條件：<strong>${conditionText}</strong></div>
                     <div style="margin-bottom: 16px;">自母體 ${totalCount} 支中，篩選出 <strong>${results.length}</strong> 支完全符合</div>
@@ -1405,8 +1296,7 @@
 
         function renderTable(data) {
             DOM.resultCard.style.display = 'block'; DOM.resultBody.innerHTML = '';
-            const nowStr = new Date().toLocaleString('zh-TW', { hour12: false, month: '2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
-
+            
             data.forEach(stock => {
                 const colorClass = (stock.change === 0) ? '' : (stock.change > 0 ? 'text-up' : 'text-down');
                 const sign = stock.change > 0 ? '+' : '';
@@ -1422,10 +1312,9 @@
                 tr.innerHTML = `
                     <td style="font-weight:700;">${stock.id}</td><td>${stock.name}</td>
                     <td class="font-mono">${stock.price.toFixed(2)}</td><td class="font-mono ${colorClass}">${sign}${stock.change.toFixed(2)}%</td>
-                    <td class="font-mono" style="color:var(--text-secondary);">${nowStr}</td>
                     <td class="font-mono text-up">${tp1}</td><td class="font-mono text-up">${tp2}</td><td class="font-mono text-down">${sl}</td>
                     <td style="font-weight:700; color:${dotColor};">
-                        ${stock.entryExitSuggestion} <span style="font-size:12px;">●</span><br>
+                        ${stock.actionSuggestion} <span style="font-size:12px;">●</span><br>
                         <button class="btn-diag" onclick="showAiDiag('${stock.id}')">AI 診斷</button>
                     </td>
                 `;
@@ -1519,7 +1408,7 @@
         document.querySelectorAll('.modal-overlay').forEach(ov => { ov.addEventListener('click', (e) => { if(e.target === ov) ov.classList.remove('active'); }); });
 
         document.addEventListener('DOMContentLoaded', () => { 
-            updateThemeUI(); initBookmarks(); window.fetchMarketIndex(true); 
+            updateThemeUI(); initBookmarks(); fetchMarketIndex(true); 
         });
 
     </script>
